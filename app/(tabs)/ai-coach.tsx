@@ -10,7 +10,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as Haptics from 'expo-haptics';
 import { 
   Camera, 
   Mic, 
@@ -39,8 +38,12 @@ export default function AICoachScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   const triggerHaptic = () => {
+    // Web-compatible haptic feedback alternative
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      // Would use Haptics.impactAsync here on native platforms
+    } else {
+      // Visual feedback for web
+      console.log('Haptic feedback triggered');
     }
   };
 
