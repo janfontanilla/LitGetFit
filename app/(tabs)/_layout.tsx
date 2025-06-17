@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
-import { Home, RotateCcw, Brain, Utensils, User } from 'lucide-react-native';
+import { Chrome as Home, RotateCcw, Brain, Utensils, User } from 'lucide-react-native';
 
 export default function TabLayout() {
   const iconSize = 24;
