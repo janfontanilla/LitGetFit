@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Settings, Bell, Shield, Cloud, Watch, Palette, HelpCircle, Star, LogOut, ChevronRight, Crown, Zap } from 'lucide-react-native';
+import { User, Settings, Bell, Shield, Cloud, Watch, Palette, CircleHelp as HelpCircle, Star, LogOut, ChevronRight, Crown, Zap } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
