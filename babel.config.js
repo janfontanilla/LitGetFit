@@ -5,8 +5,7 @@ module.exports = function (api) {
     plugins: [
       // Ensure proper module interop
       ['@babel/plugin-transform-modules-commonjs', {
-        allowTopLevelThis: true,
-        loose: true
+        allowTopLevelThis: true
       }],
       // Add reanimated plugin
       'react-native-reanimated/plugin',
