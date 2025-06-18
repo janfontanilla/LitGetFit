@@ -1,3 +1,9 @@
+declare module '@env' {
+  export const EXPO_PUBLIC_SUPABASE_URL: string;
+  export const EXPO_PUBLIC_SUPABASE_ANON_KEY: string;
+}
+
+// For global environment variable types in Expo
 declare global {
   namespace NodeJS {
     interface ProcessEnv {

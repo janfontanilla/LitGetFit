@@ -20,8 +20,8 @@ export const AppColors = {
 };
 
 export const Gradients = {
-  primary: ['#007AFF', '#5856D6'],
-  secondary: ['#FF3B30', '#FF9500'],
-  background: ['#1a1a2e', '#16213e', '#0f3460'],
-  card: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)'],
+  primary: ['#007AFF', '#5856D6'] as const,
+  secondary: ['#FF3B30', '#FF9500'] as const,
+  background: ['#1a1a2e', '#16213e', '#0f3460'] as const,
+  card: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)'] as const,
 };
