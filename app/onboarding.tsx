@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, User, Target, Activity } from 'lucide-react-native';
+import { ChevronLeft, User, Target, Activity, CircleCheck as CheckCircle } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -140,18 +140,20 @@ export default function OnboardingScreen() {
   const renderStep1 = () => (
     <View style={styles.stepContent}>
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>What's your name?</Text>
+        <Text style={styles.inputLabel}>What's your name? *</Text>
         <TextInput
           style={styles.textInput}
           value={formData.name}
           onChangeText={(text) => updateFormData('name', text)}
           placeholder="Enter your name"
           placeholderTextColor={AppColors.textTertiary}
+          autoCapitalize="words"
+          autoCorrect={false}
         />
       </LiquidGlassCard>
 
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>How old are you?</Text>
+        <Text style={styles.inputLabel}>How old are you? *</Text>
         <TextInput
           style={styles.textInput}
           value={formData.age ? formData.age.toString() : ''}
@@ -159,11 +161,12 @@ export default function OnboardingScreen() {
           placeholder="Enter your age"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
+          maxLength={3}
         />
       </LiquidGlassCard>
 
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>What's your height? (cm)</Text>
+        <Text style={styles.inputLabel}>What's your height? (cm) *</Text>
         <TextInput
           style={styles.textInput}
           value={formData.height ? formData.height.toString() : ''}
@@ -171,11 +174,13 @@ export default function OnboardingScreen() {
           placeholder="Enter your height in cm"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
+          maxLength={3}
         />
       </LiquidGlassCard>
 
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>What's your weight? (kg) - Optional</Text>
+        <Text style={styles.inputLabel}>What's your weight? (kg)</Text>
+        <Text style={styles.inputSubLabel}>Optional - helps us provide better recommendations</Text>
         <TextInput
           style={styles.textInput}
           value={formData.weight ? formData.weight.toString() : ''}
@@ -183,6 +188,7 @@ export default function OnboardingScreen() {
           placeholder="Enter your weight in kg"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
+          maxLength={3}
         />
       </LiquidGlassCard>
     </View>
@@ -191,12 +197,12 @@ export default function OnboardingScreen() {
   const renderStep2 = () => (
     <View style={styles.stepContent}>
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>What's your fitness experience?</Text>
+        <Text style={styles.inputLabel}>What's your fitness experience? *</Text>
         <View style={styles.optionsContainer}>
           {[
-            { value: 'beginner', label: 'Beginner', subtitle: 'New to fitness' },
-            { value: 'intermediate', label: 'Intermediate', subtitle: '6+ months experience' },
-            { value: 'advanced', label: 'Advanced', subtitle: '2+ years experience' },
+            { value: 'beginner', label: 'Beginner', subtitle: 'New to fitness or returning after a break' },
+            { value: 'intermediate', label: 'Intermediate', subtitle: '6+ months of regular exercise' },
+            { value: 'advanced', label: 'Advanced', subtitle: '2+ years of consistent training' },
           ].map((option) => (
             <TouchableOpacity
               key={option.value}
@@ -206,25 +212,32 @@ export default function OnboardingScreen() {
               ]}
               onPress={() => updateFormData('fitness_experience', option.value)}
             >
-              <Text style={[
-                styles.optionText,
-                formData.fitness_experience === option.value && styles.selectedOptionText,
-              ]}>
-                {option.label}
-              </Text>
-              <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+              <View style={styles.optionContent}>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[
+                    styles.optionText,
+                    formData.fitness_experience === option.value && styles.selectedOptionText,
+                  ]}>
+                    {option.label}
+                  </Text>
+                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                </View>
+                {formData.fitness_experience === option.value && (
+                  <CheckCircle size={20} color={AppColors.primary} />
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </View>
       </LiquidGlassCard>
 
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>What's your primary goal?</Text>
+        <Text style={styles.inputLabel}>What's your primary goal? *</Text>
         <View style={styles.optionsContainer}>
           {[
             { value: 'lose_weight', label: 'Lose Weight', subtitle: 'Burn fat and get lean' },
             { value: 'gain_weight', label: 'Gain Weight', subtitle: 'Build mass and size' },
-            { value: 'build_muscle', label: 'Build Muscle', subtitle: 'Increase strength and muscle' },
+            { value: 'build_muscle', label: 'Build Muscle', subtitle: 'Increase strength and muscle definition' },
             { value: 'improve_endurance', label: 'Improve Endurance', subtitle: 'Boost cardiovascular fitness' },
             { value: 'general_fitness', label: 'General Fitness', subtitle: 'Stay healthy and active' },
           ].map((option) => (
@@ -236,13 +249,20 @@ export default function OnboardingScreen() {
               ]}
               onPress={() => updateFormData('primary_goal', option.value)}
             >
-              <Text style={[
-                styles.optionText,
-                formData.primary_goal === option.value && styles.selectedOptionText,
-              ]}>
-                {option.label}
-              </Text>
-              <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+              <View style={styles.optionContent}>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[
+                    styles.optionText,
+                    formData.primary_goal === option.value && styles.selectedOptionText,
+                  ]}>
+                    {option.label}
+                  </Text>
+                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                </View>
+                {formData.primary_goal === option.value && (
+                  <CheckCircle size={20} color={AppColors.primary} />
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -253,10 +273,11 @@ export default function OnboardingScreen() {
   const renderStep3 = () => (
     <View style={styles.stepContent}>
       <LiquidGlassCard style={styles.inputCard}>
-        <Text style={styles.inputLabel}>How active are you currently?</Text>
+        <Text style={styles.inputLabel}>How active are you currently? *</Text>
+        <Text style={styles.inputSubLabel}>This helps us create the right workout intensity for you</Text>
         <View style={styles.optionsContainer}>
           {[
-            { value: 'sedentary', label: 'Sedentary', subtitle: 'Little to no exercise' },
+            { value: 'sedentary', label: 'Sedentary', subtitle: 'Little to no exercise, desk job' },
             { value: 'lightly_active', label: 'Lightly Active', subtitle: 'Light exercise 1-3 days/week' },
             { value: 'moderately_active', label: 'Moderately Active', subtitle: 'Moderate exercise 3-5 days/week' },
             { value: 'very_active', label: 'Very Active', subtitle: 'Hard exercise 6-7 days/week' },
@@ -270,13 +291,20 @@ export default function OnboardingScreen() {
               ]}
               onPress={() => updateFormData('activity_level', option.value)}
             >
-              <Text style={[
-                styles.optionText,
-                formData.activity_level === option.value && styles.selectedOptionText,
-              ]}>
-                {option.label}
-              </Text>
-              <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+              <View style={styles.optionContent}>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[
+                    styles.optionText,
+                    formData.activity_level === option.value && styles.selectedOptionText,
+                  ]}>
+                    {option.label}
+                  </Text>
+                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                </View>
+                {formData.activity_level === option.value && (
+                  <CheckCircle size={20} color={AppColors.primary} />
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -359,6 +387,15 @@ export default function OnboardingScreen() {
               size="large"
               style={styles.continueButton}
             />
+            
+            {currentStep === 1 && (
+              <TouchableOpacity 
+                style={styles.skipButton}
+                onPress={() => router.replace('/(tabs)')}
+              >
+                <Text style={styles.skipText}>Skip for now</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -445,7 +482,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.textPrimary,
+    marginBottom: 8,
+  },
+  inputSubLabel: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
     marginBottom: 12,
+    lineHeight: 18,
   },
   textInput: {
     fontSize: 16,
@@ -471,6 +514,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 122, 255, 0.2)',
     borderColor: AppColors.primary,
   },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
   optionText: {
     fontSize: 16,
     fontWeight: '600',
@@ -483,6 +534,7 @@ const styles = StyleSheet.create({
   optionSubtitle: {
     fontSize: 14,
     color: AppColors.textSecondary,
+    lineHeight: 18,
   },
   footer: {
     paddingHorizontal: 20,
@@ -490,5 +542,15 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     width: '100%',
+    marginBottom: 12,
+  },
+  skipButton: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+  },
+  skipText: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });
