@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   bottomOverlay: {
     paddingHorizontal: 20,
-    paddingBottom: 120, // Increased from 20 to 120 to account for tab bar
+    paddingBottom: 130, // Increased from 120 to 130 to account for tab bar
   },
   controlsContainer: {
     flexDirection: 'row',

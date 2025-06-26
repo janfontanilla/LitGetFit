@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120, // Increased from 100 to 120
+    paddingBottom: 130, // Increased from 120 to 130
   },
   profileCard: {
     margin: 20,

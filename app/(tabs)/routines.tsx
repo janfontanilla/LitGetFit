@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routinesContent: {
-    paddingBottom: 120, // Increased from 105 to 120
+    paddingBottom: 130, // Increased from 120 to 130
   },
   routineCard: {
     marginHorizontal: 20,
