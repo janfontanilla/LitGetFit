@@ -35,6 +35,9 @@ export default function MeasurementsScreen() {
   const [weightKg, setWeightKg] = useState(formData.weight ? formData.weight.toString() : '');
   const [weightLbs, setWeightLbs] = useState('');
 
+  // Track if user has interacted with height input
+  const [hasInteractedWithHeight, setHasInteractedWithHeight] = useState(false);
+
   const handleContinue = () => {
     let finalHeight = 0;
     let finalWeight = 0;
@@ -80,6 +83,19 @@ export default function MeasurementsScreen() {
   };
 
   const isValid = getHeightValidation() && getWeightValidation();
+  const showHeightError = hasInteractedWithHeight && !getHeightValidation();
+
+  const handleHeightChange = (value: string, type: 'cm' | 'feet' | 'inches') => {
+    setHasInteractedWithHeight(true);
+    
+    if (type === 'cm') {
+      setHeightCm(value);
+    } else if (type === 'feet') {
+      setHeightFeet(value);
+    } else if (type === 'inches') {
+      setHeightInches(value);
+    }
+  };
 
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
@@ -148,7 +164,7 @@ export default function MeasurementsScreen() {
                         <TextInput
                           style={styles.textInput}
                           value={heightCm}
-                          onChangeText={setHeightCm}
+                          onChangeText={(value) => handleHeightChange(value, 'cm')}
                           placeholder="170"
                           placeholderTextColor={AppColors.textTertiary}
                           keyboardType="numeric"
@@ -161,7 +177,7 @@ export default function MeasurementsScreen() {
                         <TextInput
                           style={styles.textInput}
                           value={heightFeet}
-                          onChangeText={setHeightFeet}
+                          onChangeText={(value) => handleHeightChange(value, 'feet')}
                           placeholder="5"
                           placeholderTextColor={AppColors.textTertiary}
                           keyboardType="numeric"
@@ -171,7 +187,7 @@ export default function MeasurementsScreen() {
                         <TextInput
                           style={styles.textInput}
                           value={heightInches}
-                          onChangeText={setHeightInches}
+                          onChangeText={(value) => handleHeightChange(value, 'inches')}
                           placeholder="8"
                           placeholderTextColor={AppColors.textTertiary}
                           keyboardType="numeric"
@@ -201,7 +217,7 @@ export default function MeasurementsScreen() {
                     </View>
                   </LiquidGlassCard>
                 </View>
-                {!getHeightValidation() && (
+                {showHeightError && (
                   <Text style={styles.errorText}>
                     Please enter a valid height
                   </Text>

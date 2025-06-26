@@ -27,7 +27,7 @@ interface Routine {
   exercises: number;
 }
 
-const mockRoutines: Routine[] = [
+const initialRoutines: Routine[] = [
   {
     id: '1',
     name: 'Morning Power Flow',
@@ -77,8 +77,9 @@ const mockRoutines: Routine[] = [
 export default function RoutinesScreen() {
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [routines, setRoutines] = useState<Routine[]>(initialRoutines);
 
-  const filteredRoutines = mockRoutines.filter(routine => {
+  const filteredRoutines = routines.filter(routine => {
     const matchesFilter = selectedFilter === 'All' || routine.isFavorited;
     const matchesSearch = routine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          routine.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -95,8 +96,13 @@ export default function RoutinesScreen() {
   };
 
   const toggleFavorite = (routineId: string) => {
-    // In a real app, this would update the backend
-    console.log('Toggle favorite for routine:', routineId);
+    setRoutines(prevRoutines => 
+      prevRoutines.map(routine => 
+        routine.id === routineId 
+          ? { ...routine, isFavorited: !routine.isFavorited }
+          : routine
+      )
+    );
   };
 
   return (
@@ -292,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routinesContent: {
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   routineCard: {
     marginHorizontal: 20,

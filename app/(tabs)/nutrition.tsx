@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Mic, Camera, Image as ImageIcon } from 'lucide-react-native';
+import { Send, Mic, Camera, Image as ImageIcon, MicIcon } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -51,6 +51,7 @@ export default function NutritionScreen() {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const sendMessage = (text: string) => {
@@ -98,6 +99,12 @@ export default function NutritionScreen() {
 
   const handleQuickReply = (reply: QuickReply) => {
     sendMessage(reply.text);
+  };
+
+  const toggleVoiceMode = () => {
+    setIsVoiceMode(!isVoiceMode);
+    // Voice mode logic will be implemented later
+    console.log('Voice mode toggled:', !isVoiceMode);
   };
 
   useEffect(() => {
@@ -164,6 +171,26 @@ export default function NutritionScreen() {
               <Text style={styles.coachStatus}>Online • Ready to help</Text>
             </View>
           </View>
+          
+          {/* Voice Mode Button */}
+          <TouchableOpacity
+            style={[
+              styles.voiceModeButton,
+              isVoiceMode && styles.voiceModeButtonActive,
+            ]}
+            onPress={toggleVoiceMode}
+          >
+            <MicIcon 
+              size={20} 
+              color={isVoiceMode ? AppColors.textPrimary : AppColors.textSecondary} 
+            />
+            <Text style={[
+              styles.voiceModeText,
+              isVoiceMode && styles.voiceModeTextActive,
+            ]}>
+              Voice
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <KeyboardAvoidingView 
@@ -256,6 +283,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -264,6 +294,7 @@ const styles = StyleSheet.create({
   coachInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 40,
@@ -289,6 +320,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: AppColors.success,
     marginTop: 2,
+  },
+  voiceModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 6,
+  },
+  voiceModeButtonActive: {
+    backgroundColor: AppColors.primary,
+  },
+  voiceModeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: AppColors.textSecondary,
+  },
+  voiceModeTextActive: {
+    color: AppColors.textPrimary,
   },
   messagesContainer: {
     flex: 1,
@@ -376,7 +427,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 100, // Tab bar spacing
+    paddingBottom: 120,
   },
   inputCard: {
     paddingVertical: 4,
