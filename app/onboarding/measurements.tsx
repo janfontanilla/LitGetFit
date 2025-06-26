@@ -110,7 +110,6 @@ export default function MeasurementsScreen() {
                 </Text>
               </View>
               <View style={styles.inputSection}>
-                {/* Unit System Toggle */}
                 <View style={styles.unitToggle}>
                   <TouchableOpacity
                     style={[
@@ -141,8 +140,6 @@ export default function MeasurementsScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Height Input */}
                 <View style={styles.measurementGroup}>
                   <Text style={styles.measurementLabel}>Height *</Text>
                   <LiquidGlassCard style={styles.inputCard}>
@@ -185,8 +182,6 @@ export default function MeasurementsScreen() {
                     )}
                   </LiquidGlassCard>
                 </View>
-
-                {/* Weight Input */}
                 <View style={styles.measurementGroup}>
                   <Text style={styles.measurementLabel}>Weight (optional)</Text>
                   <LiquidGlassCard style={styles.inputCard}>
@@ -206,7 +201,6 @@ export default function MeasurementsScreen() {
                     </View>
                   </LiquidGlassCard>
                 </View>
-
                 {!getHeightValidation() && (
                   <Text style={styles.errorText}>
                     Please enter a valid height
