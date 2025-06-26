@@ -90,6 +90,25 @@ export default function OnboardingScreen() {
         return;
       }
 
+      // Additional validation for age and height constraints
+      if (formData.age <= 0 || formData.age >= 150) {
+        Alert.alert('Invalid Age', 'Please enter a valid age between 1 and 149.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.height <= 0 || formData.height >= 300) {
+        Alert.alert('Invalid Height', 'Please enter a valid height between 1 and 299 cm.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.weight && (formData.weight <= 0 || formData.weight >= 500)) {
+        Alert.alert('Invalid Weight', 'Please enter a valid weight between 1 and 499 kg.');
+        setIsLoading(false);
+        return;
+      }
+
       // Save to Supabase
       const profile = await userProfileService.createProfile(formData);
 
@@ -113,7 +132,7 @@ export default function OnboardingScreen() {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.name.trim() !== '' && formData.age > 0 && formData.height > 0;
+        return formData.name.trim() !== '' && formData.age > 0 && formData.age < 150 && formData.height > 0 && formData.height < 300;
       case 2:
         return formData.fitness_experience !== '' && formData.primary_goal !== '';
       case 3:
@@ -143,7 +162,10 @@ export default function OnboardingScreen() {
         <TextInput
           style={styles.textInput}
           value={formData.age ? formData.age.toString() : ''}
-          onChangeText={(text) => updateFormData('age', parseInt(text) || 0)}
+          onChangeText={(text) => {
+            const age = parseInt(text) || 0;
+            updateFormData('age', age);
+          }}
           placeholder="Enter your age"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
@@ -156,7 +178,10 @@ export default function OnboardingScreen() {
         <TextInput
           style={styles.textInput}
           value={formData.height ? formData.height.toString() : ''}
-          onChangeText={(text) => updateFormData('height', parseInt(text) || 0)}
+          onChangeText={(text) => {
+            const height = parseInt(text) || 0;
+            updateFormData('height', height);
+          }}
           placeholder="Enter your height in cm"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
@@ -170,7 +195,10 @@ export default function OnboardingScreen() {
         <TextInput
           style={styles.textInput}
           value={formData.weight ? formData.weight.toString() : ''}
-          onChangeText={(text) => updateFormData('weight', parseInt(text) || 0)}
+          onChangeText={(text) => {
+            const weight = parseInt(text) || 0;
+            updateFormData('weight', weight);
+          }}
           placeholder="Enter your weight in kg"
           placeholderTextColor={AppColors.textTertiary}
           keyboardType="numeric"
