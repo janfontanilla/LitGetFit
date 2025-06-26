@@ -6,6 +6,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,52 +46,52 @@ export default function AgeScreen() {
             totalSteps={6}
             onBack={() => router.back()}
           />
-
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Calendar size={32} color={AppColors.primary} />
-              </View>
-              <Text style={styles.title}>How old are you?</Text>
-              <Text style={styles.subtitle}>
-                This helps us create age-appropriate workouts
-              </Text>
-            </View>
-
-            <View style={styles.inputSection}>
-              <LiquidGlassCard style={styles.inputCard}>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.textInput}
-                    value={age}
-                    onChangeText={setAge}
-                    placeholder="25"
-                    placeholderTextColor={AppColors.textTertiary}
-                    keyboardType="numeric"
-                    autoFocus
-                    maxLength={3}
-                  />
-                  <Text style={styles.unitText}>years old</Text>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Calendar size={32} color={AppColors.primary} />
                 </View>
-              </LiquidGlassCard>
-              
-              {age && !isValid && (
-                <Text style={styles.errorText}>
-                  {ageNumber < 13 ? 'You must be at least 13 years old' : 'Please enter a valid age'}
-                </Text>
-              )}
+                <Text style={styles.title}>How old are you?</Text>
+              </View>
+              <View style={styles.inputSection}>
+                <LiquidGlassCard style={styles.inputCard}>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.textInput}
+                      value={age}
+                      onChangeText={setAge}
+                      placeholder="25"
+                      placeholderTextColor={AppColors.textTertiary}
+                      keyboardType="numeric"
+                      autoFocus
+                      maxLength={3}
+                    />
+                    <Text style={styles.unitText}>years old</Text>
+                  </View>
+                </LiquidGlassCard>
+                {age && !isValid && (
+                  <Text style={styles.errorText}>
+                    {ageNumber < 13 ? 'You must be at least 13 years old' : 'Please enter a valid age'}
+                  </Text>
+                )}
+              </View>
             </View>
-
-            <View style={styles.footer}>
-              <GlassButton
-                title="Continue"
-                onPress={handleContinue}
-                disabled={!isValid}
-                variant="primary"
-                size="large"
-                style={styles.continueButton}
-              />
-            </View>
+          </ScrollView>
+          <View style={styles.footer}>
+            <GlassButton
+              title="Continue"
+              onPress={handleContinue}
+              disabled={!isValid}
+              variant="primary"
+              size="large"
+              style={styles.continueButton}
+            />
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -107,6 +108,12 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -134,12 +141,6 @@ const styles = StyleSheet.create({
     color: AppColors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
   },
   inputSection: {
     flex: 1,
@@ -172,6 +173,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   footer: {
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   continueButton: {

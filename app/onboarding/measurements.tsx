@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -92,133 +93,137 @@ export default function MeasurementsScreen() {
             totalSteps={6}
             onBack={() => router.back()}
           />
-
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Ruler size={32} color={AppColors.primary} />
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Ruler size={32} color={AppColors.primary} />
+                </View>
+                <Text style={styles.title}>Your measurements</Text>
+                <Text style={styles.subtitle}>
+                  Help us personalize your fitness plan
+                </Text>
               </View>
-              <Text style={styles.title}>Your measurements</Text>
-              <Text style={styles.subtitle}>
-                Help us personalize your fitness plan
-              </Text>
-            </View>
+              <View style={styles.inputSection}>
+                {/* Unit System Toggle */}
+                <View style={styles.unitToggle}>
+                  <TouchableOpacity
+                    style={[
+                      styles.unitButton,
+                      unitSystem === 'metric' && styles.unitButtonActive,
+                    ]}
+                    onPress={() => setUnitSystem('metric')}
+                  >
+                    <Text style={[
+                      styles.unitButtonText,
+                      unitSystem === 'metric' && styles.unitButtonTextActive,
+                    ]}>
+                      Metric
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.unitButton,
+                      unitSystem === 'imperial' && styles.unitButtonActive,
+                    ]}
+                    onPress={() => setUnitSystem('imperial')}
+                  >
+                    <Text style={[
+                      styles.unitButtonText,
+                      unitSystem === 'imperial' && styles.unitButtonTextActive,
+                    ]}>
+                      Imperial
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.inputSection}>
-              {/* Unit System Toggle */}
-              <View style={styles.unitToggle}>
-                <TouchableOpacity
-                  style={[
-                    styles.unitButton,
-                    unitSystem === 'metric' && styles.unitButtonActive,
-                  ]}
-                  onPress={() => setUnitSystem('metric')}
-                >
-                  <Text style={[
-                    styles.unitButtonText,
-                    unitSystem === 'metric' && styles.unitButtonTextActive,
-                  ]}>
-                    Metric
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.unitButton,
-                    unitSystem === 'imperial' && styles.unitButtonActive,
-                  ]}
-                  onPress={() => setUnitSystem('imperial')}
-                >
-                  <Text style={[
-                    styles.unitButtonText,
-                    unitSystem === 'imperial' && styles.unitButtonTextActive,
-                  ]}>
-                    Imperial
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                {/* Height Input */}
+                <View style={styles.measurementGroup}>
+                  <Text style={styles.measurementLabel}>Height *</Text>
+                  <LiquidGlassCard style={styles.inputCard}>
+                    {unitSystem === 'metric' ? (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          style={styles.textInput}
+                          value={heightCm}
+                          onChangeText={setHeightCm}
+                          placeholder="170"
+                          placeholderTextColor={AppColors.textTertiary}
+                          keyboardType="numeric"
+                          maxLength={3}
+                        />
+                        <Text style={styles.unitText}>cm</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          style={styles.textInput}
+                          value={heightFeet}
+                          onChangeText={setHeightFeet}
+                          placeholder="5"
+                          placeholderTextColor={AppColors.textTertiary}
+                          keyboardType="numeric"
+                          maxLength={1}
+                        />
+                        <Text style={styles.unitText}>ft</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={heightInches}
+                          onChangeText={setHeightInches}
+                          placeholder="8"
+                          placeholderTextColor={AppColors.textTertiary}
+                          keyboardType="numeric"
+                          maxLength={2}
+                        />
+                        <Text style={styles.unitText}>in</Text>
+                      </View>
+                    )}
+                  </LiquidGlassCard>
+                </View>
 
-              {/* Height Input */}
-              <View style={styles.measurementGroup}>
-                <Text style={styles.measurementLabel}>Height *</Text>
-                <LiquidGlassCard style={styles.inputCard}>
-                  {unitSystem === 'metric' ? (
+                {/* Weight Input */}
+                <View style={styles.measurementGroup}>
+                  <Text style={styles.measurementLabel}>Weight (optional)</Text>
+                  <LiquidGlassCard style={styles.inputCard}>
                     <View style={styles.inputContainer}>
                       <TextInput
                         style={styles.textInput}
-                        value={heightCm}
-                        onChangeText={setHeightCm}
-                        placeholder="170"
+                        value={unitSystem === 'metric' ? weightKg : weightLbs}
+                        onChangeText={unitSystem === 'metric' ? setWeightKg : setWeightLbs}
+                        placeholder={unitSystem === 'metric' ? '70' : '154'}
                         placeholderTextColor={AppColors.textTertiary}
                         keyboardType="numeric"
                         maxLength={3}
                       />
-                      <Text style={styles.unitText}>cm</Text>
+                      <Text style={styles.unitText}>
+                        {unitSystem === 'metric' ? 'kg' : 'lbs'}
+                      </Text>
                     </View>
-                  ) : (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        style={styles.textInput}
-                        value={heightFeet}
-                        onChangeText={setHeightFeet}
-                        placeholder="5"
-                        placeholderTextColor={AppColors.textTertiary}
-                        keyboardType="numeric"
-                        maxLength={1}
-                      />
-                      <Text style={styles.unitText}>ft</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={heightInches}
-                        onChangeText={setHeightInches}
-                        placeholder="8"
-                        placeholderTextColor={AppColors.textTertiary}
-                        keyboardType="numeric"
-                        maxLength={2}
-                      />
-                      <Text style={styles.unitText}>in</Text>
-                    </View>
-                  )}
-                </LiquidGlassCard>
+                  </LiquidGlassCard>
+                </View>
+
+                {!getHeightValidation() && (
+                  <Text style={styles.errorText}>
+                    Please enter a valid height
+                  </Text>
+                )}
               </View>
-
-              {/* Weight Input */}
-              <View style={styles.measurementGroup}>
-                <Text style={styles.measurementLabel}>Weight (optional)</Text>
-                <LiquidGlassCard style={styles.inputCard}>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      style={styles.textInput}
-                      value={unitSystem === 'metric' ? weightKg : weightLbs}
-                      onChangeText={unitSystem === 'metric' ? setWeightKg : setWeightLbs}
-                      placeholder={unitSystem === 'metric' ? '70' : '154'}
-                      placeholderTextColor={AppColors.textTertiary}
-                      keyboardType="numeric"
-                      maxLength={3}
-                    />
-                    <Text style={styles.unitText}>
-                      {unitSystem === 'metric' ? 'kg' : 'lbs'}
-                    </Text>
-                  </View>
-                </LiquidGlassCard>
-              </View>
-
-              {!getHeightValidation() && (
-                <Text style={styles.errorText}>
-                  Please enter a valid height
-                </Text>
-              )}
             </View>
-
-            <View style={styles.footer}>
-              <GlassButton
-                title="Continue"
-                onPress={handleContinue}
-                disabled={!isValid}
-                variant="primary"
-                size="large"
-                style={styles.continueButton}
-              />
-            </View>
+          </ScrollView>
+          <View style={styles.footer}>
+            <GlassButton
+              title="Continue"
+              onPress={handleContinue}
+              disabled={!isValid}
+              variant="primary"
+              size="large"
+              style={styles.continueButton}
+            />
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -235,6 +240,12 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -333,6 +344,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   footer: {
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   continueButton: {

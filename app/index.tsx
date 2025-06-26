@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -54,7 +54,7 @@ export default function WelcomeScreen() {
             <View style={styles.logoContainer}>
               <Zap size={48} color={AppColors.primary} />
             </View>
-            <Text style={styles.loadingText}>Loading AI Fitness Coach...</Text>
+            <Text style={styles.loadingText}>Loading Lit Get Fit...</Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -64,13 +64,17 @@ export default function WelcomeScreen() {
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Hero Section */}
           <View style={styles.heroSection}>
             <View style={styles.logoContainer}>
               <Zap size={64} color={AppColors.primary} />
             </View>
-            <Text style={styles.appName}>AI Fitness Coach</Text>
+            <Text style={styles.appName}>Lit Get Fit</Text>
             <Text style={styles.tagline}>
               Your personal AI-powered fitness companion
             </Text>
@@ -146,7 +150,7 @@ export default function WelcomeScreen() {
               Join thousands of users achieving their fitness goals
             </Text>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -158,6 +162,12 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -180,14 +190,11 @@ const styles = StyleSheet.create({
     color: AppColors.textSecondary,
     fontWeight: '500',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
   heroSection: {
     alignItems: 'center',
     paddingTop: 60,
     paddingBottom: 40,
+    paddingHorizontal: 20,
   },
   appName: {
     fontSize: 32,
@@ -208,6 +215,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 16,
     paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   featureCard: {
     padding: 0,
@@ -240,6 +248,7 @@ const styles = StyleSheet.create({
   },
   ctaSection: {
     paddingVertical: 40,
+    paddingHorizontal: 20,
     alignItems: 'center',
     gap: 12,
   },

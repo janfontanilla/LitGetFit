@@ -6,6 +6,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,46 +44,53 @@ export default function NameScreen() {
             totalSteps={6}
             onBack={() => router.back()}
           />
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <User size={32} color={AppColors.primary} />
-              </View>
-              <Text style={styles.title}>What's your name?</Text>
-              <Text style={styles.subtitle}>
-                We'll use this to personalize your experience
-              </Text>
-            </View>
-            <View style={styles.inputSection}>
-              <LiquidGlassCard style={styles.inputCard}>
-                <TextInput
-                  style={styles.textInput}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter your first name"
-                  placeholderTextColor={AppColors.textTertiary}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  autoFocus
-                  maxLength={50}
-                />
-              </LiquidGlassCard>
-              {name.length > 0 && name.length < 2 && (
-                <Text style={styles.errorText}>
-                  Name must be at least 2 characters
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <User size={32} color={AppColors.primary} />
+                </View>
+                <Text style={styles.title}>What's your name?</Text>
+                <Text style={styles.subtitle}>
+                  We'll use this to personalize your experience
                 </Text>
-              )}
+              </View>
+              <View style={styles.inputSection}>
+                <LiquidGlassCard style={styles.inputCard}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Enter your full name"
+                    placeholderTextColor={AppColors.textTertiary}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    autoFocus
+                    maxLength={50}
+                  />
+                </LiquidGlassCard>
+                {name.length > 0 && name.length < 2 && (
+                  <Text style={styles.errorText}>
+                    Name must be at least 2 characters
+                  </Text>
+                )}
+              </View>
             </View>
-            <View style={styles.footer}>
-              <GlassButton
-                title="Continue"
-                onPress={handleContinue}
-                disabled={!isValid}
-                variant="primary"
-                size="large"
-                style={styles.continueButton}
-              />
-            </View>
+          </ScrollView>
+          <View style={styles.footer}>
+            <GlassButton
+              title="Continue"
+              onPress={handleContinue}
+              disabled={!isValid}
+              variant="primary"
+              size="large"
+              style={styles.continueButton}
+            />
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -99,6 +107,12 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -153,6 +167,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   footer: {
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   continueButton: {

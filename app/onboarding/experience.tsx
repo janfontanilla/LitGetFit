@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -51,66 +51,69 @@ export default function ExperienceScreen() {
           totalSteps={6}
           onBack={() => router.back()}
         />
-
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Award size={32} color={AppColors.primary} />
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View style={styles.iconContainer}>
+                <Award size={32} color={AppColors.primary} />
+              </View>
+              <Text style={styles.title}>Your fitness experience</Text>
+              <Text style={styles.subtitle}>
+                This helps us create the right intensity for you
+              </Text>
             </View>
-            <Text style={styles.title}>Your fitness experience</Text>
-            <Text style={styles.subtitle}>
-              This helps us create the right intensity for you
-            </Text>
-          </View>
-
-          <View style={styles.optionsSection}>
-            {experienceOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={styles.optionButton}
-                onPress={() => setSelectedExperience(option.value)}
-                activeOpacity={0.7}
-              >
-                <LiquidGlassCard
-                  style={[
-                    styles.optionCard,
-                    selectedExperience === option.value && styles.selectedCard,
-                  ]}
+            <View style={styles.optionsSection}>
+              {experienceOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={styles.optionButton}
+                  onPress={() => setSelectedExperience(option.value)}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.optionContent}>
-                    <View style={styles.optionLeft}>
-                      <Text style={styles.optionEmoji}>{option.emoji}</Text>
-                      <View style={styles.optionText}>
-                        <Text style={[
-                          styles.optionTitle,
-                          selectedExperience === option.value && styles.selectedText,
-                        ]}>
-                          {option.title}
-                        </Text>
-                        <Text style={styles.optionDescription}>
-                          {option.description}
-                        </Text>
+                  <LiquidGlassCard
+                    style={[
+                      styles.optionCard,
+                      selectedExperience === option.value && styles.selectedCard,
+                    ]}
+                  >
+                    <View style={styles.optionContent}>
+                      <View style={styles.optionLeft}>
+                        <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                        <View style={styles.optionText}>
+                          <Text style={[
+                            styles.optionTitle,
+                            selectedExperience === option.value && styles.selectedText,
+                          ]}>
+                            {option.title}
+                          </Text>
+                          <Text style={styles.optionDescription}>
+                            {option.description}
+                          </Text>
+                        </View>
                       </View>
+                      {selectedExperience === option.value && (
+                        <CheckCircle size={24} color={AppColors.primary} />
+                      )}
                     </View>
-                    {selectedExperience === option.value && (
-                      <CheckCircle size={24} color={AppColors.primary} />
-                    )}
-                  </View>
-                </LiquidGlassCard>
-              </TouchableOpacity>
-            ))}
+                  </LiquidGlassCard>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-
-          <View style={styles.footer}>
-            <GlassButton
-              title="Continue"
-              onPress={handleContinue}
-              disabled={!selectedExperience}
-              variant="primary"
-              size="large"
-              style={styles.continueButton}
-            />
-          </View>
+        </ScrollView>
+        <View style={styles.footer}>
+          <GlassButton
+            title="Continue"
+            onPress={handleContinue}
+            disabled={!selectedExperience}
+            variant="primary"
+            size="large"
+            style={styles.continueButton}
+          />
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -123,6 +126,12 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -204,6 +213,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   footer: {
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   continueButton: {
