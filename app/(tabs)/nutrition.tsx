@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Mic, Camera, Image as ImageIcon, MicIcon } from 'lucide-react-native';
+import { Send, Mic, Camera, Image as ImageIcon, Mic as MicIcon } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
