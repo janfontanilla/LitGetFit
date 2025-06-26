@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -69,80 +69,86 @@ export default function CompleteScreen() {
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          {/* Success Animation */}
-          <View style={styles.successSection}>
-            <View style={styles.successIcon}>
-              <CheckCircle size={64} color={AppColors.success} />
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            {/* Success Animation */}
+            <View style={styles.successSection}>
+              <View style={styles.successIcon}>
+                <CheckCircle size={64} color={AppColors.success} />
+              </View>
+              <Text style={styles.title}>You're all set!</Text>
+              <Text style={styles.subtitle}>
+                Your personalized fitness journey is ready to begin
+              </Text>
             </View>
-            <Text style={styles.title}>You're all set!</Text>
-            <Text style={styles.subtitle}>
-              Your personalized fitness journey is ready to begin
-            </Text>
-          </View>
 
-          {/* Summary Card */}
-          <LiquidGlassCard style={styles.summaryCard}>
-            <View style={styles.summaryHeader}>
-              <Sparkles size={24} color={AppColors.primary} />
-              <Text style={styles.summaryTitle}>Your Profile</Text>
-            </View>
-            
-            <View style={styles.summaryContent}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Name:</Text>
-                <Text style={styles.summaryValue}>{formData.name}</Text>
+            {/* Summary Card */}
+            <LiquidGlassCard style={styles.summaryCard}>
+              <View style={styles.summaryHeader}>
+                <Sparkles size={24} color={AppColors.primary} />
+                <Text style={styles.summaryTitle}>Your Profile</Text>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Age:</Text>
-                <Text style={styles.summaryValue}>{formData.age} years</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Height:</Text>
-                <Text style={styles.summaryValue}>{formData.height} cm</Text>
-              </View>
-              {formData.weight && (
+              
+              <View style={styles.summaryContent}>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Weight:</Text>
-                  <Text style={styles.summaryValue}>{formData.weight} kg</Text>
+                  <Text style={styles.summaryLabel}>Name:</Text>
+                  <Text style={styles.summaryValue}>{formData.name}</Text>
                 </View>
-              )}
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Experience:</Text>
-                <Text style={styles.summaryValue}>
-                  {formData.fitness_experience?.charAt(0).toUpperCase() + formData.fitness_experience?.slice(1)}
-                </Text>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Age:</Text>
+                  <Text style={styles.summaryValue}>{formData.age} years</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Height:</Text>
+                  <Text style={styles.summaryValue}>{formData.height} cm</Text>
+                </View>
+                {formData.weight && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Weight:</Text>
+                    <Text style={styles.summaryValue}>{formData.weight} kg</Text>
+                  </View>
+                )}
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Experience:</Text>
+                  <Text style={styles.summaryValue}>
+                    {formData.fitness_experience?.charAt(0).toUpperCase() + formData.fitness_experience?.slice(1)}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Goal:</Text>
+                  <Text style={styles.summaryValue}>
+                    {formData.primary_goal?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Activity:</Text>
+                  <Text style={styles.summaryValue}>
+                    {formData.activity_level?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Goal:</Text>
-                <Text style={styles.summaryValue}>
-                  {formData.primary_goal?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Activity:</Text>
-                <Text style={styles.summaryValue}>
-                  {formData.activity_level?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Text>
-              </View>
-            </View>
-          </LiquidGlassCard>
+            </LiquidGlassCard>
 
-          {/* CTA Section */}
-          <View style={styles.ctaSection}>
-            <GlassButton
-              title={isLoading ? 'Creating Your Profile...' : 'Start Your Journey'}
-              onPress={handleComplete}
-              disabled={isLoading}
-              variant="primary"
-              size="large"
-              style={styles.completeButton}
-            />
-            <Text style={styles.disclaimer}>
-              You can always update your profile later in settings
-            </Text>
+            {/* CTA Section */}
+            <View style={styles.ctaSection}>
+              <GlassButton
+                title={isLoading ? 'Creating Your Profile...' : 'Start Your Journey'}
+                onPress={handleComplete}
+                disabled={isLoading}
+                variant="primary"
+                size="large"
+                style={styles.completeButton}
+              />
+              <Text style={styles.disclaimer}>
+                You can always update your profile later in settings
+              </Text>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -155,14 +161,21 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    justifyContent: 'space-between',
   },
   successSection: {
     alignItems: 'center',
     paddingTop: 80,
+    paddingBottom: 40,
   },
   successIcon: {
     marginBottom: 32,
