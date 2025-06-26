@@ -18,13 +18,22 @@ import { ChevronLeft, User, Target, Activity, CircleCheck as CheckCircle } from 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
-import { supabase, OnboardingData } from '@/lib/supabase';
 
 interface OnboardingStep {
   id: number;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
+}
+
+interface OnboardingData {
+  name: string;
+  age: number;
+  height: number;
+  weight: number;
+  fitness_experience: string;
+  primary_goal: string;
+  activity_level: string;
 }
 
 const steps: OnboardingStep[] = [
@@ -90,36 +99,14 @@ export default function OnboardingScreen() {
         return;
       }
 
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            name: formData.name,
-            age: formData.age,
-            height: formData.height,
-            weight: formData.weight || null,
-            fitness_experience: formData.fitness_experience,
-            primary_goal: formData.primary_goal,
-            activity_level: formData.activity_level,
-          }
-        ])
-        .select();
-
-      if (error) {
-        console.error('Error saving user profile:', error);
-        Alert.alert('Error', 'Failed to save your profile. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('User profile saved:', data);
+      // Simulate saving profile
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Navigate to main app
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Unexpected error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      console.error('Error saving profile:', error);
+      Alert.alert('Error', 'Failed to save your profile. Please try again.');
       setIsLoading(false);
     }
   };

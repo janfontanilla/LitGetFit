@@ -8,38 +8,18 @@ import { Zap } from 'lucide-react-native';
 import GlassButton from '@/components/GlassButton';
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import { AppColors, Gradients } from '@/styles/colors';
-import { supabase } from '@/lib/supabase';
 
 export default function WelcomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkUserProfile();
-  }, []);
-
-  const checkUserProfile = async () => {
-    try {
-      // Check if user has completed onboarding
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .limit(1);
-
-      if (error) {
-        console.log('Database not available, continuing to welcome screen');
-      }
-
-      // If user has profile, go to main app, otherwise show welcome
-      if (data && data.length > 0) {
-        router.replace('/(tabs)');
-      } else {
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log('Database connection issue, showing welcome screen');
+    // Simulate checking for existing user profile
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    }
-  };
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const startOnboarding = () => {
     router.push('/onboarding');
