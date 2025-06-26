@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100, // Tab bar spacing
+    paddingBottom: 120, // Increased from 105 to 120
   },
   header: {
     flexDirection: 'row',

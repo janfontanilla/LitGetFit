@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routinesContent: {
-    paddingBottom: 105, // Adjusted for smaller tab bar
+    paddingBottom: 120, // Increased from 105 to 120
   },
   routineCard: {
     marginHorizontal: 20,

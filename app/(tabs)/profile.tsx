@@ -300,7 +300,7 @@ export default function ProfileScreen() {
 
           {/* App Info */}
           <View style={styles.appInfo}>
-            <Text style={styles.appVersion}>AI Fitness Coach v1.0.0</Text>
+            <Text style={styles.appVersion}>Lit Get Fit v1.0.0</Text>
             <View style={styles.legalLinks}>
               <TouchableOpacity>
                 <Text style={styles.legalLink}>Terms of Service</Text>
@@ -310,7 +310,7 @@ export default function ProfileScreen() {
                 <Text style={styles.legalLink}>Privacy Policy</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.copyright}>© 2024 AI Fitness Coach</Text>
+            <Text style={styles.copyright}>© 2024 Lit Get Fit</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100, // Tab bar spacing
+    paddingBottom: 120, // Increased from 100 to 120
   },
   profileCard: {
     margin: 20,

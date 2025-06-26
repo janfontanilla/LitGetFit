@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 105, // Adjusted for smaller tab bar
+    paddingBottom: 120, // Increased from 105 to 120
   },
   inputCard: {
     paddingVertical: 4,
