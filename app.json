@@ -8,6 +8,7 @@
     "scheme": "ai-fitness-coach",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "main": "expo-router/entry",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aifitnesscoach.app"
