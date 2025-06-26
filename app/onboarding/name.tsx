@@ -43,7 +43,6 @@ export default function NameScreen() {
             totalSteps={6}
             onBack={() => router.back()}
           />
-
           <View style={styles.content}>
             <View style={styles.header}>
               <View style={styles.iconContainer}>
@@ -54,7 +53,6 @@ export default function NameScreen() {
                 We'll use this to personalize your experience
               </Text>
             </View>
-
             <View style={styles.inputSection}>
               <LiquidGlassCard style={styles.inputCard}>
                 <TextInput
@@ -69,14 +67,12 @@ export default function NameScreen() {
                   maxLength={50}
                 />
               </LiquidGlassCard>
-              
               {name.length > 0 && name.length < 2 && (
                 <Text style={styles.errorText}>
                   Name must be at least 2 characters
                 </Text>
               )}
             </View>
-
             <View style={styles.footer}>
               <GlassButton
                 title="Continue"
