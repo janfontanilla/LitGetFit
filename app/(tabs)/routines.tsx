@@ -118,7 +118,7 @@ export default function RoutinesScreen() {
         <View style={styles.searchContainer}>
           <LiquidGlassCard style={styles.searchCard}>
             <View style={styles.searchInputContainer}>
-              <Search size={20} color={AppColors.textSecondary} />
+              <Search size={18} color={AppColors.textSecondary} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search routines..."
@@ -258,7 +258,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   searchCard: {
-    paddingVertical: 4,
+    paddingVertical: 8, // Reduced from default padding
+    paddingHorizontal: 16, // Reduced horizontal padding
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -267,9 +268,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     color: AppColors.textPrimary,
-    paddingVertical: 8,
+    paddingVertical: 4, // Reduced from 8
   },
   filterContainer: {
     flexDirection: 'row',
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routinesContent: {
-    paddingBottom: 120,
+    paddingBottom: 105, // Adjusted for smaller tab bar
   },
   routineCard: {
     marginHorizontal: 20,

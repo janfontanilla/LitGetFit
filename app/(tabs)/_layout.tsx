@@ -17,20 +17,20 @@ export default function TabLayout() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: Platform.OS === 'ios' ? 100 : 100, // Increased height significantly
-          paddingBottom: Platform.OS === 'ios' ? 34 : 20, // More bottom padding
-          paddingTop: 16, // More top padding
+          height: Platform.OS === 'ios' ? 85 : 85, // Reduced from 100 to 85
+          paddingBottom: Platform.OS === 'ios' ? 28 : 16, // Reduced padding
+          paddingTop: 12, // Reduced from 16 to 12
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)',
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
-          marginTop: 6, // More space between icon and text
+          marginTop: 4, // Reduced from 6 to 4
           marginBottom: 0,
         },
         tabBarIconStyle: {
-          marginTop: 4,
+          marginTop: 2, // Reduced from 4 to 2
         },
       }}>
       <Tabs.Screen
