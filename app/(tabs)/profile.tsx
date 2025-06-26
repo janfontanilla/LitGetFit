@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,17 @@ import {
   TouchableOpacity,
   Image,
   Switch,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Settings, Bell, Shield, Cloud, Watch, Palette, CircleHelp as HelpCircle, Star, LogOut, ChevronRight, Crown, Zap } from 'lucide-react-native';
+import { User, Settings, Bell, Shield, Cloud, Watch, Palette, CircleHelp as HelpCircle, Star, LogOut, ChevronRight, Crown, Zap, Edit } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
+import { userProfileService, UserProfile } from '@/lib/supabase';
+import { router } from 'expo-router';
 
 interface SettingsOption {
   id: string;
@@ -33,6 +36,47 @@ export default function ProfileScreen() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [cloudSync, setCloudSync] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const profiles = await userProfileService.getAllProfiles();
+      if (profiles.length > 0) {
+        setUserProfile(profiles[0]); // Get the first profile
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditProfile = () => {
+    router.push('/onboarding');
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: () => {
+            // Clear user data and go back to welcome screen
+            router.replace('/');
+          }
+        },
+      ]
+    );
+  };
 
   const userStats = [
     { label: 'Workouts', value: '128', icon: <Zap size={16} color={AppColors.primary} /> },
@@ -47,7 +91,7 @@ export default function ProfileScreen() {
       title: 'Account Settings',
       subtitle: 'Manage your personal information',
       showChevron: true,
-      onPress: () => console.log('Account settings'),
+      onPress: handleEditProfile,
     },
     {
       id: 'notifications',
@@ -113,7 +157,7 @@ export default function ProfileScreen() {
       icon: <LogOut size={20} color={AppColors.accent} />,
       title: 'Sign Out',
       destructive: true,
-      onPress: () => console.log('Sign out'),
+      onPress: handleSignOut,
     },
   ];
 
@@ -159,6 +203,32 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
+  const getDisplayName = () => {
+    if (userProfile?.name) {
+      return userProfile.name;
+    }
+    return 'Fitness Enthusiast';
+  };
+
+  const getDisplayEmail = () => {
+    if (userProfile?.name) {
+      return `${userProfile.name.toLowerCase().replace(' ', '.')}@email.com`;
+    }
+    return 'user@email.com';
+  };
+
+  if (isLoading) {
+    return (
+      <LinearGradient colors={Gradients.background} style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -177,14 +247,26 @@ export default function ProfileScreen() {
                   }}
                   style={styles.profileImage}
                 />
-                <View style={styles.editBadge}>
-                  <Settings size={12} color={AppColors.textPrimary} />
-                </View>
+                <TouchableOpacity style={styles.editBadge} onPress={handleEditProfile}>
+                  <Edit size={12} color={AppColors.textPrimary} />
+                </TouchableOpacity>
               </TouchableOpacity>
               
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>Alex Johnson</Text>
-                <Text style={styles.profileEmail}>alex.johnson@email.com</Text>
+                <Text style={styles.profileName}>{getDisplayName()}</Text>
+                <Text style={styles.profileEmail}>{getDisplayEmail()}</Text>
+                
+                {userProfile && (
+                  <View style={styles.profileDetails}>
+                    <Text style={styles.profileDetail}>
+                      {userProfile.age} years • {userProfile.height}cm
+                      {userProfile.weight && ` • ${userProfile.weight}kg`}
+                    </Text>
+                    <Text style={styles.profileDetail}>
+                      Goal: {userProfile.primary_goal.replace('_', ' ')} • {userProfile.fitness_experience}
+                    </Text>
+                  </View>
+                )}
                 
                 <View style={styles.subscriptionBadge}>
                   <Crown size={12} color={AppColors.warning} />
@@ -243,6 +325,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: AppColors.textSecondary,
+  },
   scrollView: {
     flex: 1,
   },
@@ -291,6 +382,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: AppColors.textSecondary,
     marginBottom: 8,
+  },
+  profileDetails: {
+    marginBottom: 8,
+  },
+  profileDetail: {
+    fontSize: 12,
+    color: AppColors.textTertiary,
+    marginBottom: 2,
   },
   subscriptionBadge: {
     flexDirection: 'row',

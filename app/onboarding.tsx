@@ -18,22 +18,13 @@ import { ChevronLeft, User, Target, Activity, CircleCheck as CheckCircle } from 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
+import { userProfileService, OnboardingData } from '@/lib/supabase';
 
 interface OnboardingStep {
   id: number;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-}
-
-interface OnboardingData {
-  name: string;
-  age: number;
-  height: number;
-  weight: number;
-  fitness_experience: string;
-  primary_goal: string;
-  activity_level: string;
 }
 
 const steps: OnboardingStep[] = [
@@ -99,14 +90,22 @@ export default function OnboardingScreen() {
         return;
       }
 
-      // Simulate saving profile
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Save to Supabase
+      const profile = await userProfileService.createProfile(formData);
+
+      if (!profile) {
+        Alert.alert('Error', 'Failed to save your profile. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('User profile saved:', profile);
       
       // Navigate to main app
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Error saving profile:', error);
-      Alert.alert('Error', 'Failed to save your profile. Please try again.');
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };

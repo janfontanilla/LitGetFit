@@ -8,21 +8,42 @@ import { Zap } from 'lucide-react-native';
 import GlassButton from '@/components/GlassButton';
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import { AppColors, Gradients } from '@/styles/colors';
+import { userProfileService } from '@/lib/supabase';
 
 export default function WelcomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
+  const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
-    // Simulate checking for existing user profile
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    checkUserProfile();
   }, []);
+
+  const checkUserProfile = async () => {
+    try {
+      // Check if any user profiles exist
+      const profiles = await userProfileService.getAllProfiles();
+      
+      if (profiles.length > 0) {
+        // User has completed onboarding, go to main app
+        setHasProfile(true);
+        router.replace('/(tabs)');
+      } else {
+        // No profile found, show welcome screen
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+      // On error, show welcome screen
+      setIsLoading(false);
+    }
+  };
 
   const startOnboarding = () => {
     router.push('/onboarding');
+  };
+
+  const goToApp = () => {
+    router.replace('/(tabs)');
   };
 
   if (isLoading) {
@@ -30,8 +51,10 @@ export default function WelcomeScreen() {
       <LinearGradient colors={Gradients.background} style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <Zap size={48} color={AppColors.primary} />
-            <Text style={styles.loadingText}>Loading...</Text>
+            <View style={styles.logoContainer}>
+              <Zap size={48} color={AppColors.primary} />
+            </View>
+            <Text style={styles.loadingText}>Loading AI Fitness Coach...</Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -110,6 +133,15 @@ export default function WelcomeScreen() {
               size="large"
               style={styles.getStartedButton}
             />
+            {hasProfile && (
+              <GlassButton
+                title="Continue to App"
+                onPress={goToApp}
+                variant="secondary"
+                size="medium"
+                style={styles.continueButton}
+              />
+            )}
             <Text style={styles.disclaimer}>
               Join thousands of users achieving their fitness goals
             </Text>
@@ -131,7 +163,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
+    gap: 24,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.3)',
   },
   loadingText: {
     fontSize: 16,
@@ -147,23 +189,13 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
-  logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 122, 255, 0.3)',
-  },
   appName: {
     fontSize: 32,
     fontWeight: '700',
     color: AppColors.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
+    marginTop: 24,
   },
   tagline: {
     fontSize: 18,
@@ -209,15 +241,19 @@ const styles = StyleSheet.create({
   ctaSection: {
     paddingVertical: 40,
     alignItems: 'center',
+    gap: 12,
   },
   getStartedButton: {
     width: '100%',
-    marginBottom: 16,
+  },
+  continueButton: {
+    width: '100%',
   },
   disclaimer: {
     fontSize: 14,
     color: AppColors.textTertiary,
     textAlign: 'center',
     lineHeight: 20,
+    marginTop: 8,
   },
 });
