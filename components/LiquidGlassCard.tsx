@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { AppColors } from '@/styles/colors';
 
 interface LiquidGlassCardProps {
   children: React.ReactNode;
@@ -12,8 +13,8 @@ interface LiquidGlassCardProps {
 export default function LiquidGlassCard({ 
   children, 
   style, 
-  intensity = 20,
-  tint = 'light'
+  intensity = 10,
+  tint = 'dark'
 }: LiquidGlassCardProps) {
   return (
     <View style={[styles.container, style]}>
@@ -28,24 +29,16 @@ export default function LiquidGlassCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    borderColor: AppColors.border,
   },
   blurView: {
-    borderRadius: 16,
+    borderRadius: 20,
   },
   content: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 16,
+    backgroundColor: AppColors.glassBackground,
+    padding: 20,
   },
 });

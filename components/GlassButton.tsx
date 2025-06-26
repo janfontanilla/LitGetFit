@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { AppColors } from '@/styles/colors';
 
 interface GlassButtonProps {
   title: string;
@@ -9,6 +10,7 @@ interface GlassButtonProps {
   size?: 'small' | 'medium' | 'large';
   style?: ViewStyle;
   disabled?: boolean;
+  icon?: React.ReactNode;
 }
 
 export default function GlassButton({
@@ -18,6 +20,7 @@ export default function GlassButton({
   size = 'medium',
   style,
   disabled = false,
+  icon,
 }: GlassButtonProps) {
   const getButtonStyles = () => {
     const baseStyle = [styles.button, styles[size]];
@@ -58,8 +61,11 @@ export default function GlassButton({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <BlurView intensity={15} tint="light" style={styles.blurContainer}>
-        <Text style={getTextStyles()}>{title}</Text>
+      <BlurView intensity={10} tint="dark" style={styles.blurContainer}>
+        <View style={styles.contentContainer}>
+          <Text style={getTextStyles()}>{title}</Text>
+          {icon && <View style={styles.iconContainer}>{icon}</View>}
+        </View>
       </BlurView>
     </TouchableOpacity>
   );
@@ -67,41 +73,47 @@ export default function GlassButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: AppColors.border,
   },
   blurContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconContainer: {
+    marginLeft: 4,
+  },
   small: {
-    height: 36,
+    height: 40,
     paddingHorizontal: 16,
   },
   medium: {
-    height: 44,
-    paddingHorizontal: 20,
-  },
-  large: {
-    height: 52,
+    height: 48,
     paddingHorizontal: 24,
   },
+  large: {
+    height: 56,
+    paddingHorizontal: 32,
+  },
   primary: {
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
   },
   secondary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: AppColors.backgroundSecondary,
+    borderColor: AppColors.border,
   },
   tertiary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
+    borderColor: AppColors.border,
   },
   disabled: {
     opacity: 0.5,
@@ -120,12 +132,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   primaryText: {
-    color: '#007AFF',
+    color: AppColors.textPrimary,
   },
   secondaryText: {
-    color: '#FFFFFF',
+    color: AppColors.textPrimary,
   },
   disabledText: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: AppColors.textTertiary,
   },
 });
