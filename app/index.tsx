@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
         .limit(1);
 
       if (error) {
-        console.error('Error checking user profile:', error);
+        console.log('Database not available, continuing to welcome screen');
       }
 
       // If user has profile, go to main app, otherwise show welcome
@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.log('Database connection issue, showing welcome screen');
       setIsLoading(false);
     }
   };

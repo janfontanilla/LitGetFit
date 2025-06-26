@@ -3,10 +3,6 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Ensure proper module interop
-      ['@babel/plugin-transform-modules-commonjs', {
-        allowTopLevelThis: true
-      }],
       // Add react-native-dotenv plugin to load environment variables
       ['module:react-native-dotenv', {
         'moduleName': '@env',
@@ -14,9 +10,10 @@ module.exports = function (api) {
         'blocklist': null,
         'allowlist': null,
         'safe': false,
-        'allowUndefined': true
+        'allowUndefined': true,
+        'verbose': false
       }],
-      // Add reanimated plugin
+      // Add reanimated plugin (must be last)
       'react-native-reanimated/plugin',
     ],
   };

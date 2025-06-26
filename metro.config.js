@@ -14,8 +14,11 @@ config.resolver.alias = {
 config.transformer.getTransformOptions = async () => ({
   transform: {
     experimentalImportSupport: false,
-    inlineRequires: true,
+    inlineRequires: false,
   },
 });
+
+// Add resolver configuration for better module resolution
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs', 'cjs'];
 
 module.exports = config;
