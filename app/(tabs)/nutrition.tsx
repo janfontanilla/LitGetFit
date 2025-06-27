@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Mic, Camera, Image as ImageIcon, Mic as MicIcon } from 'lucide-react-native';
+import { Send, Mic, Camera, Image as ImageIcon, Mic as MicIcon, Utensils } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
+import VoiceFoodLogger from '@/components/VoiceFoodLogger';
+import FoodLogsList from '@/components/FoodLogsList';
 import { AppColors, Gradients } from '@/styles/colors';
 
 interface Message {
@@ -34,17 +36,17 @@ interface QuickReply {
 const mockMessages: Message[] = [
   {
     id: '1',
-    text: "Hi! I'm your nutrition coach. I'm here to help you track your meals, get personalized recommendations, and answer any nutrition questions you have. How can I assist you today?",
+    text: "Hi! I'm your nutrition coach. I'm here to help you track your meals, get personalized recommendations, and answer any nutrition questions you have. Try using the voice logger below to quickly log your meals!",
     isUser: false,
     timestamp: new Date(Date.now() - 30000),
   },
 ];
 
 const quickReplies: QuickReply[] = [
-  { id: '1', text: 'Log breakfast', action: 'log_meal' },
-  { id: '2', text: 'Show today\'s macros', action: 'show_macros' },
-  { id: '3', text: 'Meal recommendations', action: 'meal_suggestions' },
-  { id: '4', text: 'Water intake', action: 'water_log' },
+  { id: '1', text: 'Show today\'s macros', action: 'show_macros' },
+  { id: '2', text: 'Meal recommendations', action: 'meal_suggestions' },
+  { id: '3', text: 'Water intake', action: 'water_log' },
+  { id: '4', text: 'Nutrition tips', action: 'nutrition_tips' },
 ];
 
 export default function NutritionScreen() {
@@ -52,6 +54,8 @@ export default function NutritionScreen() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [todaysLogs, setTodaysLogs] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const sendMessage = (text: string) => {
@@ -84,14 +88,15 @@ export default function NutritionScreen() {
   const generateBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
     
-    if (lowerMessage.includes('breakfast') || lowerMessage.includes('log')) {
-      return "Great! Let's log your breakfast. What did you have? You can describe your meal or take a photo and I'll help identify the foods and estimate calories.";
-    } else if (lowerMessage.includes('macro') || lowerMessage.includes('nutrition')) {
-      return "Here's your nutrition summary for today:\n\n• Calories: 1,850 / 2,200\n• Protein: 120g / 150g\n• Carbs: 180g / 220g\n• Fats: 65g / 85g\n\nYou're doing well! Try to add more protein to reach your daily goal.";
+    if (lowerMessage.includes('macro') || lowerMessage.includes('nutrition')) {
+      const totalCalories = todaysLogs.reduce((sum, log) => sum + (log.calories || 0), 0);
+      return `Here's your nutrition summary for today:\n\n• Calories: ${totalCalories} / 2,200\n• Protein: 120g / 150g\n• Carbs: 180g / 220g\n• Fats: 65g / 85g\n\nYou're doing well! Try to add more protein to reach your daily goal.`;
     } else if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
       return "Based on your goals and current intake, I recommend:\n\n🥗 Grilled chicken salad with quinoa\n🍳 Greek yogurt with berries and nuts\n🐟 Salmon with roasted vegetables\n\nWould you like the recipe for any of these?";
     } else if (lowerMessage.includes('water')) {
       return "Staying hydrated is crucial! You've had 6 glasses today - aim for 8-10. Set reminders throughout the day to drink water regularly.";
+    } else if (lowerMessage.includes('tip')) {
+      return "Here are some quick nutrition tips:\n\n• Eat protein with every meal\n• Fill half your plate with vegetables\n• Stay hydrated throughout the day\n• Plan your meals in advance\n• Listen to your hunger cues";
     } else {
       return "I understand you're asking about nutrition. I can help you track meals, analyze your macros, suggest healthy recipes, and answer nutrition questions. What specific area would you like to focus on?";
     }
@@ -101,9 +106,26 @@ export default function NutritionScreen() {
     sendMessage(reply.text);
   };
 
+  const handleFoodLogged = (foodLog: any) => {
+    setRefreshTrigger(prev => prev + 1);
+    
+    // Add a success message to the chat
+    const successMessage: Message = {
+      id: Date.now().toString(),
+      text: `Great! I've logged "${foodLog.quantity} ${foodLog.food_name}" for ${foodLog.meal_type}. ${foodLog.calories ? `That's approximately ${foodLog.calories} calories.` : ''} Keep up the good tracking!`,
+      isUser: false,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, successMessage]);
+  };
+
+  const handleLogsChange = (logs: any[]) => {
+    setTodaysLogs(logs);
+  };
+
   const toggleVoiceMode = () => {
     setIsVoiceMode(!isVoiceMode);
-    // Voice mode logic will be implemented later
     console.log('Voice mode toggled:', !isVoiceMode);
   };
 
@@ -164,7 +186,7 @@ export default function NutritionScreen() {
         <View style={styles.header}>
           <View style={styles.coachInfo}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>🥗</Text>
+              <Utensils size={20} color={AppColors.primary} />
             </View>
             <View style={styles.coachDetails}>
               <Text style={styles.coachName}>Nutrition Coach</Text>
@@ -197,6 +219,22 @@ export default function NutritionScreen() {
           style={styles.keyboardContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
+          {/* Voice Food Logger */}
+          <View style={styles.voiceLoggerContainer}>
+            <VoiceFoodLogger 
+              onFoodLogged={handleFoodLogged}
+              style={styles.voiceLogger}
+            />
+          </View>
+
+          {/* Food Logs List */}
+          <View style={styles.foodLogsContainer}>
+            <FoodLogsList 
+              refreshTrigger={refreshTrigger}
+              onLogsChange={handleLogsChange}
+            />
+          </View>
+
           {/* Messages */}
           <ScrollView
             ref={scrollViewRef}
@@ -240,7 +278,7 @@ export default function NutritionScreen() {
                   style={styles.textInput}
                   value={inputText}
                   onChangeText={setInputText}
-                  placeholder="Ask about nutrition, log meals..."
+                  placeholder="Ask about nutrition, get meal tips..."
                   placeholderTextColor={AppColors.textSecondary}
                   multiline
                   maxLength={500}
@@ -305,9 +343,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  avatarText: {
-    fontSize: 20,
-  },
   coachDetails: {
     flex: 1,
   },
@@ -341,8 +376,21 @@ const styles = StyleSheet.create({
   voiceModeTextActive: {
     color: AppColors.textPrimary,
   },
+  voiceLoggerContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  voiceLogger: {
+    marginBottom: 0,
+  },
+  foodLogsContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    maxHeight: 300,
+  },
   messagesContainer: {
     flex: 1,
+    maxHeight: 200,
   },
   messagesContent: {
     paddingVertical: 16,
@@ -427,7 +475,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 130, // Increased from 120 to 130
+    paddingBottom: 130,
   },
   inputCard: {
     paddingVertical: 4,
