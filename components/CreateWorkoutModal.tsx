@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, Edit3, Zap } from 'lucide-react-native';
+import { X, CreditCard as Edit3, Zap } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 
