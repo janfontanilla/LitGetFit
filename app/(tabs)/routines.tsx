@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Heart, Clock, Star, Zap } from 'lucide-react-native';
+import { Search, Heart, Clock, Star, Zap, Plus } from 'lucide-react-native';
+import { router } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
+import CreateWorkoutModal from '@/components/CreateWorkoutModal';
+import AIGenerationTypeModal from '@/components/AIGenerationTypeModal';
 import { AppColors, Gradients } from '@/styles/colors';
 
 interface Routine {
@@ -78,6 +81,10 @@ export default function RoutinesScreen() {
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [routines, setRoutines] = useState<Routine[]>(initialRoutines);
+  
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAITypeModal, setShowAITypeModal] = useState(false);
 
   const filteredRoutines = routines.filter(routine => {
     const matchesFilter = selectedFilter === 'All' || routine.isFavorited;
@@ -105,13 +112,48 @@ export default function RoutinesScreen() {
     );
   };
 
+  // Modal handlers
+  const handleCreateWorkout = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleSelectManual = () => {
+    setShowCreateModal(false);
+    router.push('/create-workout');
+  };
+
+  const handleSelectAI = () => {
+    setShowCreateModal(false);
+    setShowAITypeModal(true);
+  };
+
+  const handleSelectRoutine = () => {
+    setShowAITypeModal(false);
+    router.push('/create-workout/ai-routine');
+  };
+
+  const handleSelectSingleWorkout = () => {
+    setShowAITypeModal(false);
+    router.push('/create-workout/ai-single');
+  };
+
+  const handleBackToCreate = () => {
+    setShowAITypeModal(false);
+    setShowCreateModal(true);
+  };
+
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Workout Routines</Text>
-          <Text style={styles.subtitle}>Find your perfect workout</Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>My Workouts</Text>
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateWorkout}>
+              <Plus size={20} color={AppColors.textPrimary} />
+              <Text style={styles.createButtonText}>Create Workout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search Bar */}
@@ -172,60 +214,101 @@ export default function RoutinesScreen() {
           contentContainerStyle={styles.routinesContent}
           showsVerticalScrollIndicator={false}
         >
-          {filteredRoutines.map((routine) => (
-            <LiquidGlassCard key={routine.id} style={styles.routineCard}>
-              <View style={styles.routineHeader}>
-                <View style={styles.routineInfo}>
-                  <Text style={styles.routineName}>{routine.name}</Text>
-                  <Text style={styles.routineDescription}>
-                    {routine.description}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.favoriteButton}
-                  onPress={() => toggleFavorite(routine.id)}
-                >
-                  <Heart
-                    size={20}
-                    color={routine.isFavorited ? AppColors.accent : AppColors.textSecondary}
-                    fill={routine.isFavorited ? AppColors.accent : 'transparent'}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.routineMeta}>
-                <View style={styles.metaItem}>
-                  <Clock size={16} color={AppColors.textSecondary} />
-                  <Text style={styles.metaText}>{routine.duration} min</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Star size={16} color={getDifficultyColor(routine.difficulty)} />
-                  <Text style={[styles.metaText, { color: getDifficultyColor(routine.difficulty) }]}>
-                    {routine.difficulty}
-                  </Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Zap size={16} color={AppColors.textSecondary} />
-                  <Text style={styles.metaText}>{routine.exercises} exercises</Text>
-                </View>
-              </View>
-
-              <View style={styles.equipmentContainer}>
-                <Text style={styles.equipmentLabel}>Equipment:</Text>
-                <Text style={styles.equipmentText}>
-                  {routine.equipment.join(', ')}
-                </Text>
-              </View>
-
-              <GlassButton
-                title="Start Workout"
-                onPress={() => console.log('Start workout:', routine.id)}
-                variant="primary"
-                style={styles.startButton}
-              />
+          {filteredRoutines.length === 0 ? (
+            <LiquidGlassCard style={styles.emptyStateCard}>
+              <Text style={styles.emptyStateTitle}>
+                {selectedFilter === 'Favorites' ? 'No favorites yet' : 'No workouts found'}
+              </Text>
+              <Text style={styles.emptyStateDescription}>
+                {selectedFilter === 'Favorites' 
+                  ? 'Heart your favorite workouts to see them here'
+                  : searchQuery 
+                    ? 'Try adjusting your search terms'
+                    : 'Create your first workout to get started'
+                }
+              </Text>
+              {!searchQuery && (
+                <GlassButton
+                  title="Create Workout"
+                  onPress={handleCreateWorkout}
+                  variant="primary"
+                  size="medium"
+                  style={styles.emptyStateButton}
+                />
+              )}
             </LiquidGlassCard>
-          ))}
+          ) : (
+            filteredRoutines.map((routine) => (
+              <LiquidGlassCard key={routine.id} style={styles.routineCard}>
+                <View style={styles.routineHeader}>
+                  <View style={styles.routineInfo}>
+                    <Text style={styles.routineName}>{routine.name}</Text>
+                    <Text style={styles.routineDescription}>
+                      {routine.description}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={() => toggleFavorite(routine.id)}
+                  >
+                    <Heart
+                      size={20}
+                      color={routine.isFavorited ? AppColors.accent : AppColors.textSecondary}
+                      fill={routine.isFavorited ? AppColors.accent : 'transparent'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.routineMeta}>
+                  <View style={styles.metaItem}>
+                    <Clock size={16} color={AppColors.textSecondary} />
+                    <Text style={styles.metaText}>{routine.duration} min</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Star size={16} color={getDifficultyColor(routine.difficulty)} />
+                    <Text style={[styles.metaText, { color: getDifficultyColor(routine.difficulty) }]}>
+                      {routine.difficulty}
+                    </Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Zap size={16} color={AppColors.textSecondary} />
+                    <Text style={styles.metaText}>{routine.exercises} exercises</Text>
+                  </View>
+                </View>
+
+                <View style={styles.equipmentContainer}>
+                  <Text style={styles.equipmentLabel}>Equipment:</Text>
+                  <Text style={styles.equipmentText}>
+                    {routine.equipment.join(', ')}
+                  </Text>
+                </View>
+
+                <GlassButton
+                  title="Start Workout"
+                  onPress={() => console.log('Start workout:', routine.id)}
+                  variant="primary"
+                  style={styles.startButton}
+                />
+              </LiquidGlassCard>
+            ))
+          )}
         </ScrollView>
+
+        {/* Modals */}
+        <CreateWorkoutModal
+          visible={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSelectManual={handleSelectManual}
+          onSelectAI={handleSelectAI}
+        />
+
+        <AIGenerationTypeModal
+          visible={showAITypeModal}
+          onClose={() => setShowAITypeModal(false)}
+          onBack={handleBackToCreate}
+          onSelectRoutine={handleSelectRoutine}
+          onSelectSingleWorkout={handleSelectSingleWorkout}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -243,23 +326,37 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 32,
     fontWeight: '700',
     color: AppColors.textPrimary,
-    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: AppColors.primary,
+    borderRadius: 20,
+    gap: 6,
+  },
+  createButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
   },
   searchContainer: {
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   searchCard: {
-    paddingVertical: 8, // Reduced from default padding
-    paddingHorizontal: 16, // Reduced horizontal padding
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -268,9 +365,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14, // Reduced from 16
+    fontSize: 14,
     color: AppColors.textPrimary,
-    paddingVertical: 4, // Reduced from 8
+    paddingVertical: 4,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -299,7 +396,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routinesContent: {
-    paddingBottom: 130, // Increased from 120 to 130
+    paddingBottom: 130,
+  },
+  emptyStateCard: {
+    marginHorizontal: 20,
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    paddingHorizontal: 32,
   },
   routineCard: {
     marginHorizontal: 20,
