@@ -26,6 +26,7 @@ interface Routine {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   equipment: string[];
   isFavorited: boolean;
+  isSaved: boolean;
   category: string;
   exercises: number;
 }
@@ -39,6 +40,7 @@ const initialRoutines: Routine[] = [
     difficulty: 'Intermediate',
     equipment: ['Dumbbells', 'Mat'],
     isFavorited: true,
+    isSaved: true,
     category: 'Full Body',
     exercises: 8,
   },
@@ -50,6 +52,7 @@ const initialRoutines: Routine[] = [
     difficulty: 'Advanced',
     equipment: ['None'],
     isFavorited: false,
+    isSaved: true,
     category: 'Cardio',
     exercises: 6,
   },
@@ -61,6 +64,7 @@ const initialRoutines: Routine[] = [
     difficulty: 'Beginner',
     equipment: ['Mat'],
     isFavorited: true,
+    isSaved: false,
     category: 'Core',
     exercises: 10,
   },
@@ -72,13 +76,14 @@ const initialRoutines: Routine[] = [
     difficulty: 'Intermediate',
     equipment: ['Dumbbells', 'Pull-up Bar'],
     isFavorited: false,
+    isSaved: true,
     category: 'Strength',
     exercises: 12,
   },
 ];
 
 export default function RoutinesScreen() {
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites'>('All');
+  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites' | 'Saved'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [routines, setRoutines] = useState<Routine[]>(initialRoutines);
   
@@ -87,7 +92,14 @@ export default function RoutinesScreen() {
   const [showAITypeModal, setShowAITypeModal] = useState(false);
 
   const filteredRoutines = routines.filter(routine => {
-    const matchesFilter = selectedFilter === 'All' || routine.isFavorited;
+    let matchesFilter = true;
+    
+    if (selectedFilter === 'Favorites') {
+      matchesFilter = routine.isFavorited;
+    } else if (selectedFilter === 'Saved') {
+      matchesFilter = routine.isSaved;
+    }
+    
     const matchesSearch = routine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          routine.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -148,64 +160,83 @@ export default function RoutinesScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={styles.title}>My Workouts</Text>
+            <Text style={styles.title}>Routines</Text>
             <TouchableOpacity style={styles.createButton} onPress={handleCreateWorkout}>
-              <Plus size={20} color={AppColors.textPrimary} />
-              <Text style={styles.createButtonText}>Create Workout</Text>
+              <Plus size={18} color={AppColors.textPrimary} />
+              <Text style={styles.createButtonText}>Create</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <LiquidGlassCard style={styles.searchCard}>
-            <View style={styles.searchInputContainer}>
-              <Search size={18} color={AppColors.textSecondary} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search routines..."
-                placeholderTextColor={AppColors.textSecondary}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-          </LiquidGlassCard>
-        </View>
+        {/* Search and Filter Row */}
+        <View style={styles.searchFilterRow}>
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <LiquidGlassCard style={styles.searchCard}>
+              <View style={styles.searchInputContainer}>
+                <Search size={16} color={AppColors.textSecondary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search..."
+                  placeholderTextColor={AppColors.textSecondary}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+            </LiquidGlassCard>
+          </View>
 
-        {/* Filter Tabs */}
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[
-              styles.filterTab,
-              selectedFilter === 'All' && styles.activeFilterTab,
-            ]}
-            onPress={() => setSelectedFilter('All')}
-          >
-            <Text
+          {/* Filter Tabs */}
+          <View style={styles.filterContainer}>
+            <TouchableOpacity
               style={[
-                styles.filterText,
-                selectedFilter === 'All' && styles.activeFilterText,
+                styles.filterTab,
+                selectedFilter === 'All' && styles.activeFilterTab,
               ]}
+              onPress={() => setSelectedFilter('All')}
             >
-              All Routines
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterTab,
-              selectedFilter === 'Favorites' && styles.activeFilterTab,
-            ]}
-            onPress={() => setSelectedFilter('Favorites')}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === 'All' && styles.activeFilterText,
+                ]}
+              >
+                All
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.filterText,
-                selectedFilter === 'Favorites' && styles.activeFilterText,
+                styles.filterTab,
+                selectedFilter === 'Favorites' && styles.activeFilterTab,
               ]}
+              onPress={() => setSelectedFilter('Favorites')}
             >
-              Favorites
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === 'Favorites' && styles.activeFilterText,
+                ]}
+              >
+                Favorites
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterTab,
+                selectedFilter === 'Saved' && styles.activeFilterTab,
+              ]}
+              onPress={() => setSelectedFilter('Saved')}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === 'Saved' && styles.activeFilterText,
+                ]}
+              >
+                Saved
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Routines List */}
@@ -217,11 +248,18 @@ export default function RoutinesScreen() {
           {filteredRoutines.length === 0 ? (
             <LiquidGlassCard style={styles.emptyStateCard}>
               <Text style={styles.emptyStateTitle}>
-                {selectedFilter === 'Favorites' ? 'No favorites yet' : 'No workouts found'}
+                {selectedFilter === 'Favorites' 
+                  ? 'No favorites yet' 
+                  : selectedFilter === 'Saved'
+                  ? 'No saved routines'
+                  : 'No workouts found'
+                }
               </Text>
               <Text style={styles.emptyStateDescription}>
                 {selectedFilter === 'Favorites' 
                   ? 'Heart your favorite workouts to see them here'
+                  : selectedFilter === 'Saved'
+                  ? 'Save routines to access them quickly'
                   : searchQuery 
                     ? 'Try adjusting your search terms'
                     : 'Create your first workout to get started'
@@ -339,53 +377,57 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: AppColors.primary,
-    borderRadius: 20,
-    gap: 6,
+    borderRadius: 18,
+    gap: 4,
   },
   createButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: AppColors.textPrimary,
   },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  searchCard: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: AppColors.textPrimary,
-    paddingVertical: 4,
-  },
-  filterContainer: {
+  searchFilterRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 20,
     gap: 12,
+    alignItems: 'center',
+  },
+  searchContainer: {
+    flex: 1,
+  },
+  searchCard: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: AppColors.textPrimary,
+    paddingVertical: 2,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: 8,
   },
   filterTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   activeFilterTab: {
     backgroundColor: AppColors.primary,
   },
   filterText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: AppColors.textSecondary,
   },
