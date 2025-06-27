@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -86,10 +87,16 @@ export default function RoutinesScreen() {
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites' | 'Saved'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [routines, setRoutines] = useState<Routine[]>(initialRoutines);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAITypeModal, setShowAITypeModal] = useState(false);
+
+  // Animation values
+  const searchWidthAnim = useRef(new Animated.Value(0)).current;
+  const filtersOpacityAnim = useRef(new Animated.Value(1)).current;
+  const filtersTranslateAnim = useRef(new Animated.Value(0)).current;
 
   const filteredRoutines = routines.filter(routine => {
     let matchesFilter = true;
@@ -104,6 +111,52 @@ export default function RoutinesScreen() {
                          routine.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+    
+    Animated.parallel([
+      Animated.timing(searchWidthAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(filtersOpacityAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(filtersTranslateAnim, {
+        toValue: 100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleSearchBlur = () => {
+    if (!searchQuery) {
+      setIsSearchFocused(false);
+      
+      Animated.parallel([
+        Animated.timing(searchWidthAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(filtersOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(filtersTranslateAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -162,7 +215,7 @@ export default function RoutinesScreen() {
           <View style={styles.headerContent}>
             <Text style={styles.title}>Routines</Text>
             <TouchableOpacity style={styles.createButton} onPress={handleCreateWorkout}>
-              <Plus size={18} color={AppColors.textPrimary} />
+              <Plus size={16} color={AppColors.textPrimary} />
               <Text style={styles.createButtonText}>Create</Text>
             </TouchableOpacity>
           </View>
@@ -170,24 +223,44 @@ export default function RoutinesScreen() {
 
         {/* Search and Filter Row */}
         <View style={styles.searchFilterRow}>
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
+          {/* Animated Search Container */}
+          <Animated.View 
+            style={[
+              styles.searchContainer,
+              {
+                flex: searchWidthAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 3],
+                }),
+              }
+            ]}
+          >
             <LiquidGlassCard style={styles.searchCard}>
               <View style={styles.searchInputContainer}>
-                <Search size={16} color={AppColors.textSecondary} />
+                <Search size={14} color={AppColors.textSecondary} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search..."
+                  placeholder="Search routines..."
                   placeholderTextColor={AppColors.textSecondary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
+                  onFocus={handleSearchFocus}
+                  onBlur={handleSearchBlur}
                 />
               </View>
             </LiquidGlassCard>
-          </View>
+          </Animated.View>
 
-          {/* Filter Tabs */}
-          <View style={styles.filterContainer}>
+          {/* Animated Filter Tabs */}
+          <Animated.View 
+            style={[
+              styles.filterContainer,
+              {
+                opacity: filtersOpacityAnim,
+                transform: [{ translateX: filtersTranslateAnim }],
+              }
+            ]}
+          >
             <TouchableOpacity
               style={[
                 styles.filterTab,
@@ -236,7 +309,7 @@ export default function RoutinesScreen() {
                 Saved
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
 
         {/* Routines List */}
@@ -252,7 +325,7 @@ export default function RoutinesScreen() {
                   ? 'No favorites yet' 
                   : selectedFilter === 'Saved'
                   ? 'No saved routines'
-                  : 'No workouts found'
+                  : 'No routines found'
                 }
               </Text>
               <Text style={styles.emptyStateDescription}>
@@ -290,7 +363,7 @@ export default function RoutinesScreen() {
                     onPress={() => toggleFavorite(routine.id)}
                   >
                     <Heart
-                      size={20}
+                      size={18}
                       color={routine.isFavorited ? AppColors.accent : AppColors.textSecondary}
                       fill={routine.isFavorited ? AppColors.accent : 'transparent'}
                     />
@@ -299,17 +372,17 @@ export default function RoutinesScreen() {
 
                 <View style={styles.routineMeta}>
                   <View style={styles.metaItem}>
-                    <Clock size={16} color={AppColors.textSecondary} />
+                    <Clock size={14} color={AppColors.textSecondary} />
                     <Text style={styles.metaText}>{routine.duration} min</Text>
                   </View>
                   <View style={styles.metaItem}>
-                    <Star size={16} color={getDifficultyColor(routine.difficulty)} />
+                    <Star size={14} color={getDifficultyColor(routine.difficulty)} />
                     <Text style={[styles.metaText, { color: getDifficultyColor(routine.difficulty) }]}>
                       {routine.difficulty}
                     </Text>
                   </View>
                   <View style={styles.metaItem}>
-                    <Zap size={16} color={AppColors.textSecondary} />
+                    <Zap size={14} color={AppColors.textSecondary} />
                     <Text style={styles.metaText}>{routine.exercises} exercises</Text>
                   </View>
                 </View>
@@ -377,14 +450,14 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     backgroundColor: AppColors.primary,
-    borderRadius: 18,
+    borderRadius: 16,
     gap: 4,
   },
   createButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: AppColors.textPrimary,
   },
@@ -392,42 +465,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 20,
-    gap: 12,
+    gap: 10,
     alignItems: 'center',
   },
   searchContainer: {
-    flex: 1,
+    minWidth: 120,
   },
   searchCard: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     color: AppColors.textPrimary,
-    paddingVertical: 2,
+    paddingVertical: 1,
   },
   filterContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   filterTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   activeFilterTab: {
     backgroundColor: AppColors.primary,
   },
   filterText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: AppColors.textSecondary,
   },
@@ -500,7 +573,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 11,
     color: AppColors.textSecondary,
     fontWeight: '500',
   },
