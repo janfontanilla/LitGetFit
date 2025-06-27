@@ -32,6 +32,31 @@ export interface OnboardingData {
   activity_level: string;
 }
 
+export interface Exercise {
+  id: string;
+  name: string;
+  sets: string;
+  reps: string;
+  weight: string;
+  restTime: string;
+  order: number;
+}
+
+export interface Workout {
+  id: string;
+  name: string;
+  description?: string;
+  exercises: Exercise[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkoutData {
+  name: string;
+  description?: string;
+  exercises: Omit<Exercise, 'id'>[];
+}
+
 // Database helper functions
 export const userProfileService = {
   async createProfile(data: OnboardingData): Promise<UserProfile | null> {
@@ -139,6 +164,93 @@ export const userProfileService = {
       return true;
     } catch (error) {
       console.error('Unexpected error deleting profile:', error);
+      return false;
+    }
+  }
+};
+
+export const workoutService = {
+  async createWorkout(data: WorkoutData): Promise<Workout | null> {
+    try {
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .insert([
+          {
+            name: data.name,
+            description: data.description || null,
+            exercises: data.exercises,
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating workout:', error);
+        return null;
+      }
+
+      return workout;
+    } catch (error) {
+      console.error('Unexpected error creating workout:', error);
+      return null;
+    }
+  },
+
+  async getWorkouts(): Promise<Workout[]> {
+    try {
+      const { data: workouts, error } = await supabase
+        .from('workouts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching workouts:', error);
+        return [];
+      }
+
+      return workouts || [];
+    } catch (error) {
+      console.error('Unexpected error fetching workouts:', error);
+      return [];
+    }
+  },
+
+  async updateWorkout(id: string, updates: Partial<WorkoutData>): Promise<Workout | null> {
+    try {
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating workout:', error);
+        return null;
+      }
+
+      return workout;
+    } catch (error) {
+      console.error('Unexpected error updating workout:', error);
+      return null;
+    }
+  },
+
+  async deleteWorkout(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting workout:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Unexpected error deleting workout:', error);
       return false;
     }
   }

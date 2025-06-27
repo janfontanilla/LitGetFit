@@ -34,7 +34,7 @@ export default function CreateWorkoutModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <BlurView intensity={20} tint="dark" style={styles.overlay}>
+      <BlurView intensity={40} tint="dark" style={styles.overlay}>
         <View style={styles.modalContainer}>
           <LiquidGlassCard style={styles.modal}>
             {/* Header */}
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // More opaque
   },
   modalContainer: {
     width: '90%',
