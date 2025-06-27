@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// For Expo web, we need to access environment variables differently
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+  (typeof window !== 'undefined' && (window as any).__EXPO_ENV__?.EXPO_PUBLIC_SUPABASE_URL);
+
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+  (typeof window !== 'undefined' && (window as any).__EXPO_ENV__?.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL:', supabaseUrl);
+  console.error('Supabase Anon Key:', supabaseAnonKey ? '[PRESENT]' : '[MISSING]');
   throw new Error('Missing Supabase environment variables. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
 }
 
