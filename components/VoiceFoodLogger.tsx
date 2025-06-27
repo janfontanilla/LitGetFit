@@ -8,7 +8,7 @@ import {
   Alert,
   Animated,
 } from 'react-native';
-import { Mic, MicOff, Volume2, Loader2, Check, X } from 'lucide-react-native';
+import { Mic, MicOff, Volume2, Loader as Loader2, Check, X } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
