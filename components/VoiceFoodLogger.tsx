@@ -9,7 +9,6 @@ import {
   Animated,
 } from 'react-native';
 import { Mic, MicOff, Volume2, VolumeX, Loader as Loader2, Check, X, Settings } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import { foodLogService, FoodLogData } from '@/lib/foodLogService';
@@ -32,7 +31,7 @@ interface VoiceFoodLoggerProps {
   style?: any;
 }
 
-type VoiceMode = 'native' | 'elevenlabs' | 'off';
+type VoiceMode = 'elevenlabs' | 'off';
 
 export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLoggerProps) {
   const [isListening, setIsListening] = useState(false);
@@ -225,27 +224,15 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     }
   };
 
-  const speakWithNativeTTS = (text: string) => {
-    if (Platform.OS !== 'web') {
-      Speech.speak(`Great! Logged ${text}`, {
-        language: 'en-US',
-        pitch: 1.0,
-        rate: 0.9,
-      });
-    }
-  };
-
   const provideFeedback = async (loggedText: string) => {
     if (voiceMode === 'off') return;
     
     if (voiceMode === 'elevenlabs') {
       const success = await speakWithElevenLabs(loggedText);
       if (!success && voiceMode !== 'off') {
-        // Fallback to native TTS if ElevenLabs fails
-        speakWithNativeTTS(loggedText);
+        // Show visual feedback if voice fails
+        console.log(`Logged: ${loggedText}`);
       }
-    } else if (voiceMode === 'native') {
-      speakWithNativeTTS(loggedText);
     }
   };
 
@@ -339,7 +326,7 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
   };
 
   const toggleVoiceMode = () => {
-    const modes: VoiceMode[] = ['elevenlabs', 'native', 'off'];
+    const modes: VoiceMode[] = ['elevenlabs', 'off'];
     const currentIndex = modes.indexOf(voiceMode);
     const nextIndex = (currentIndex + 1) % modes.length;
     setVoiceMode(modes[nextIndex]);
@@ -349,8 +336,6 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     switch (voiceMode) {
       case 'elevenlabs':
         return <Volume2 size={16} color={AppColors.primary} />;
-      case 'native':
-        return <Volume2 size={16} color={AppColors.warning} />;
       case 'off':
         return <VolumeX size={16} color={AppColors.textTertiary} />;
     }
@@ -360,8 +345,6 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     switch (voiceMode) {
       case 'elevenlabs':
         return 'Premium Voice';
-      case 'native':
-        return 'Basic Voice';
       case 'off':
         return 'Voice Off';
     }
