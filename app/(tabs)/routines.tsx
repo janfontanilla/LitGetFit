@@ -94,7 +94,7 @@ export default function RoutinesScreen() {
   const [showAITypeModal, setShowAITypeModal] = useState(false);
 
   // Animation values
-  const searchWidthAnim = useRef(new Animated.Value(0)).current;
+  const searchWidthAnim = useRef(new Animated.Value(120)).current; // Start with base width
   const filtersOpacityAnim = useRef(new Animated.Value(1)).current;
   const filtersTranslateAnim = useRef(new Animated.Value(0)).current;
 
@@ -117,7 +117,7 @@ export default function RoutinesScreen() {
     
     Animated.parallel([
       Animated.timing(searchWidthAnim, {
-        toValue: 1,
+        toValue: 280, // Expand to specific width
         duration: 300,
         useNativeDriver: false,
       }),
@@ -140,7 +140,7 @@ export default function RoutinesScreen() {
       
       Animated.parallel([
         Animated.timing(searchWidthAnim, {
-          toValue: 0,
+          toValue: 120, // Return to base width
           duration: 300,
           useNativeDriver: false,
         }),
@@ -228,14 +228,11 @@ export default function RoutinesScreen() {
             style={[
               styles.searchContainer,
               {
-                flex: searchWidthAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 3],
-                }),
+                width: searchWidthAnim,
               }
             ]}
           >
-            <LiquidGlassCard style={styles.searchCard}>
+            <View style={styles.searchCard}>
               <View style={styles.searchInputContainer}>
                 <Search size={14} color={AppColors.textSecondary} />
                 <TextInput
@@ -248,7 +245,7 @@ export default function RoutinesScreen() {
                   onBlur={handleSearchBlur}
                 />
               </View>
-            </LiquidGlassCard>
+            </View>
           </Animated.View>
 
           {/* Animated Filter Tabs */}
@@ -469,13 +466,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchContainer: {
-    minWidth: 120,
+    height: 32,
   },
   searchCard: {
+    flex: 1,
+    height: '100%',
     paddingVertical: 4,
     paddingHorizontal: 10,
+    backgroundColor: AppColors.backgroundSecondary, // Match app background
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   searchInputContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
