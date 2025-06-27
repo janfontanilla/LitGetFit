@@ -141,12 +141,11 @@ export default function NutritionScreen() {
         message.isUser ? styles.userMessage : styles.botMessage,
       ]}
     >
-      <LiquidGlassCard
+      <View
         style={[
           styles.messageBubble,
           message.isUser ? styles.userBubble : styles.botBubble,
         ]}
-        tint={message.isUser ? 'dark' : 'light'}
       >
         <Text style={[
           styles.messageText,
@@ -163,19 +162,19 @@ export default function NutritionScreen() {
             minute: '2-digit' 
           })}
         </Text>
-      </LiquidGlassCard>
+      </View>
     </View>
   );
 
   const renderTypingIndicator = () => (
     <View style={[styles.messageContainer, styles.botMessage]}>
-      <LiquidGlassCard style={[styles.messageBubble, styles.botBubble]}>
+      <View style={[styles.messageBubble, styles.botBubble]}>
         <View style={styles.typingContainer}>
           <View style={styles.typingDot} />
           <View style={styles.typingDot} />
           <View style={styles.typingDot} />
         </View>
-      </LiquidGlassCard>
+      </View>
     </View>
   );
 
@@ -235,74 +234,79 @@ export default function NutritionScreen() {
             />
           </View>
 
-          {/* Messages */}
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.messagesContainer}
-            contentContainerStyle={styles.messagesContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {messages.map(renderMessage)}
-            {isTyping && renderTypingIndicator()}
-          </ScrollView>
-
-          {/* Quick Replies */}
-          {!isTyping && (
+          {/* Compact Chat Section */}
+          <View style={styles.chatSection}>
+            <Text style={styles.chatTitle}>Quick Nutrition Help</Text>
+            
+            {/* Messages */}
             <ScrollView
-              horizontal
-              style={styles.quickRepliesContainer}
-              contentContainerStyle={styles.quickRepliesContent}
-              showsHorizontalScrollIndicator={false}
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+              showsVerticalScrollIndicator={false}
             >
-              {quickReplies.map((reply) => (
-                <TouchableOpacity
-                  key={reply.id}
-                  style={styles.quickReplyButton}
-                  onPress={() => handleQuickReply(reply)}
-                >
-                  <Text style={styles.quickReplyText}>{reply.text}</Text>
-                </TouchableOpacity>
-              ))}
+              {messages.slice(-2).map(renderMessage)} {/* Only show last 2 messages */}
+              {isTyping && renderTypingIndicator()}
             </ScrollView>
-          )}
 
-          {/* Input Area */}
-          <View style={styles.inputContainer}>
-            <LiquidGlassCard style={styles.inputCard}>
-              <View style={styles.inputRow}>
-                <TouchableOpacity style={styles.attachButton}>
-                  <Camera size={20} color={AppColors.textSecondary} />
-                </TouchableOpacity>
-                
-                <TextInput
-                  style={styles.textInput}
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder="Ask about nutrition, get meal tips..."
-                  placeholderTextColor={AppColors.textSecondary}
-                  multiline
-                  maxLength={500}
-                />
-                
-                <TouchableOpacity style={styles.voiceButton}>
-                  <Mic size={20} color={AppColors.textSecondary} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    inputText.trim() && styles.sendButtonActive,
-                  ]}
-                  onPress={() => sendMessage(inputText)}
-                  disabled={!inputText.trim()}
-                >
-                  <Send 
-                    size={20} 
-                    color={inputText.trim() ? AppColors.primary : AppColors.textSecondary} 
+            {/* Quick Replies */}
+            {!isTyping && (
+              <ScrollView
+                horizontal
+                style={styles.quickRepliesContainer}
+                contentContainerStyle={styles.quickRepliesContent}
+                showsHorizontalScrollIndicator={false}
+              >
+                {quickReplies.map((reply) => (
+                  <TouchableOpacity
+                    key={reply.id}
+                    style={styles.quickReplyButton}
+                    onPress={() => handleQuickReply(reply)}
+                  >
+                    <Text style={styles.quickReplyText}>{reply.text}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {/* Input Area */}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputCard}>
+                <View style={styles.inputRow}>
+                  <TouchableOpacity style={styles.attachButton}>
+                    <Camera size={18} color={AppColors.textSecondary} />
+                  </TouchableOpacity>
+                  
+                  <TextInput
+                    style={styles.textInput}
+                    value={inputText}
+                    onChangeText={setInputText}
+                    placeholder="Ask about nutrition, get meal tips..."
+                    placeholderTextColor={AppColors.textSecondary}
+                    multiline
+                    maxLength={500}
                   />
-                </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.voiceButton}>
+                    <Mic size={18} color={AppColors.textSecondary} />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.sendButton,
+                      inputText.trim() && styles.sendButtonActive,
+                    ]}
+                    onPress={() => sendMessage(inputText)}
+                    disabled={!inputText.trim()}
+                  >
+                    <Send 
+                      size={18} 
+                      color={inputText.trim() ? AppColors.primary : AppColors.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </LiquidGlassCard>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -388,17 +392,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     maxHeight: 300,
   },
-  messagesContainer: {
-    flex: 1,
-    maxHeight: 200,
+  chatSection: {
+    backgroundColor: AppColors.backgroundSecondary,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 16,
+    paddingBottom: 130,
+    marginTop: 16,
   },
-  messagesContent: {
-    paddingVertical: 16,
-    paddingBottom: 20,
-  },
-  messageContainer: {
+  chatTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
     paddingHorizontal: 20,
     marginBottom: 12,
+  },
+  messagesContainer: {
+    maxHeight: 120,
+    paddingHorizontal: 20,
+  },
+  messagesContent: {
+    paddingVertical: 8,
+  },
+  messageContainer: {
+    marginBottom: 8,
   },
   userMessage: {
     alignItems: 'flex-end',
@@ -407,19 +424,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: '85%',
     minWidth: 60,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
   },
   userBubble: {
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    backgroundColor: AppColors.primary,
   },
   botBubble: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: AppColors.backgroundTertiary,
   },
   messageText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 2,
   },
   userMessageText: {
     color: AppColors.textPrimary,
@@ -428,7 +448,7 @@ const styles = StyleSheet.create({
     color: AppColors.textPrimary,
   },
   timestamp: {
-    fontSize: 10,
+    fontSize: 9,
     opacity: 0.7,
   },
   userTimestamp: {
@@ -442,68 +462,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: AppColors.textSecondary,
-    marginHorizontal: 2,
+    marginHorizontal: 1,
     opacity: 0.6,
   },
   quickRepliesContainer: {
-    maxHeight: 50,
-    marginBottom: 16,
+    maxHeight: 40,
+    marginVertical: 12,
   },
   quickRepliesContent: {
     paddingHorizontal: 20,
     gap: 8,
   },
   quickReplyButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: AppColors.backgroundTertiary,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   quickReplyText: {
-    fontSize: 12,
+    fontSize: 11,
     color: AppColors.textSecondary,
     fontWeight: '500',
   },
   inputContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 130,
   },
   inputCard: {
+    backgroundColor: AppColors.backgroundTertiary,
+    borderRadius: 20,
     paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 12,
+    gap: 8,
   },
   attachButton: {
-    padding: 8,
+    padding: 6,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: AppColors.textPrimary,
-    maxHeight: 100,
-    paddingVertical: 8,
+    maxHeight: 80,
+    paddingVertical: 6,
     paddingHorizontal: 0,
   },
   voiceButton: {
-    padding: 8,
+    padding: 6,
   },
   sendButton: {
-    padding: 8,
+    padding: 6,
   },
   sendButtonActive: {
     backgroundColor: 'rgba(0, 122, 255, 0.2)',
-    borderRadius: 16,
+    borderRadius: 12,
   },
 });
