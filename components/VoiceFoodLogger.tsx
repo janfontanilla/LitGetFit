@@ -8,11 +8,12 @@ import {
   Alert,
   Animated,
 } from 'react-native';
-import { Mic, MicOff, Volume2, Loader as Loader2, Check, X } from 'lucide-react-native';
+import { Mic, MicOff, Volume2, VolumeX, Loader as Loader2, Check, X, Settings } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import { foodLogService, FoodLogData } from '@/lib/foodLogService';
+import { ElevenLabsService, playAudioBuffer } from '@/lib/elevenLabsService';
 
 // Mock voice recognition for web platform
 const mockVoiceRecognition = {
@@ -31,22 +32,31 @@ interface VoiceFoodLoggerProps {
   style?: any;
 }
 
+type VoiceMode = 'native' | 'elevenlabs' | 'off';
+
 export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLoggerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [lastLoggedFood, setLastLoggedFood] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [voiceMode, setVoiceMode] = useState<VoiceMode>('elevenlabs');
+  const [elevenLabsService, setElevenLabsService] = useState<ElevenLabsService | null>(null);
   
   // Animation values
   const pulseAnim = new Animated.Value(1);
   const successAnim = new Animated.Value(0);
+  const speakingAnim = new Animated.Value(1);
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
       // Initialize voice recognition for native platforms
       initializeVoiceRecognition();
     }
+    
+    // Initialize ElevenLabs service
+    initializeElevenLabs();
     
     return () => {
       if (Platform.OS !== 'web') {
@@ -62,6 +72,22 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
       stopPulseAnimation();
     }
   }, [isListening]);
+
+  useEffect(() => {
+    if (isSpeaking) {
+      startSpeakingAnimation();
+    } else {
+      stopSpeakingAnimation();
+    }
+  }, [isSpeaking]);
+
+  const initializeElevenLabs = () => {
+    // In production, you'd get this from environment variables
+    const apiKey = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
+    if (apiKey) {
+      setElevenLabsService(new ElevenLabsService(apiKey));
+    }
+  };
 
   const initializeVoiceRecognition = async () => {
     if (Platform.OS === 'web') return;
@@ -113,6 +139,31 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     }).start();
   };
 
+  const startSpeakingAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(speakingAnim, {
+          toValue: 1.1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(speakingAnim, {
+          toValue: 0.9,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  const stopSpeakingAnimation = () => {
+    Animated.timing(speakingAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const showSuccessAnimation = () => {
     setShowSuccess(true);
     Animated.sequence([
@@ -130,6 +181,72 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     ]).start(() => {
       setShowSuccess(false);
     });
+  };
+
+  const speakWithElevenLabs = async (text: string): Promise<boolean> => {
+    if (!elevenLabsService) {
+      console.log('ElevenLabs service not available');
+      return false;
+    }
+
+    try {
+      setIsSpeaking(true);
+      
+      // Generate encouraging feedback messages
+      const encouragingMessages = [
+        `Great job logging ${text}! You're doing amazing with your nutrition tracking.`,
+        `Awesome! ${text} has been added to your food diary. Keep up the fantastic work!`,
+        `Perfect! I've logged ${text} for you. You're building such healthy habits!`,
+        `Excellent! ${text} is now tracked. Your dedication to nutrition is inspiring!`,
+      ];
+      
+      const randomMessage = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
+      
+      const audioBuffer = await elevenLabsService.generateSpeech(
+        randomMessage,
+        ElevenLabsService.VOICES.BELLA, // Energetic, motivational voice
+        {
+          model: 'eleven_monolingual_v1',
+          voice_settings: ElevenLabsService.VOICE_SETTINGS.ENCOURAGING,
+        }
+      );
+
+      if (audioBuffer) {
+        await playAudioBuffer(audioBuffer);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error with ElevenLabs speech:', error);
+      return false;
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const speakWithNativeTTS = (text: string) => {
+    if (Platform.OS !== 'web') {
+      Speech.speak(`Great! Logged ${text}`, {
+        language: 'en-US',
+        pitch: 1.0,
+        rate: 0.9,
+      });
+    }
+  };
+
+  const provideFeedback = async (loggedText: string) => {
+    if (voiceMode === 'off') return;
+    
+    if (voiceMode === 'elevenlabs') {
+      const success = await speakWithElevenLabs(loggedText);
+      if (!success && voiceMode !== 'off') {
+        // Fallback to native TTS if ElevenLabs fails
+        speakWithNativeTTS(loggedText);
+      }
+    } else if (voiceMode === 'native') {
+      speakWithNativeTTS(loggedText);
+    }
   };
 
   const startListening = async () => {
@@ -201,17 +318,11 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
       const savedLog = await foodLogService.createFoodLog(foodLogData);
 
       if (savedLog) {
-        const loggedText = `Logged ${parsedFood.quantity} ${parsedFood.food_name} for ${parsedFood.meal_type}`;
+        const loggedText = `${parsedFood.quantity} ${parsedFood.food_name} for ${parsedFood.meal_type}`;
         setLastLoggedFood(loggedText);
         
         // Provide voice feedback
-        if (Platform.OS !== 'web') {
-          Speech.speak(loggedText, {
-            language: 'en-US',
-            pitch: 1.0,
-            rate: 0.9,
-          });
-        }
+        await provideFeedback(loggedText);
         
         showSuccessAnimation();
         onFoodLogged?.(savedLog);
@@ -224,6 +335,35 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     } finally {
       setIsProcessing(false);
       setIsListening(false);
+    }
+  };
+
+  const toggleVoiceMode = () => {
+    const modes: VoiceMode[] = ['elevenlabs', 'native', 'off'];
+    const currentIndex = modes.indexOf(voiceMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    setVoiceMode(modes[nextIndex]);
+  };
+
+  const getVoiceModeIcon = () => {
+    switch (voiceMode) {
+      case 'elevenlabs':
+        return <Volume2 size={16} color={AppColors.primary} />;
+      case 'native':
+        return <Volume2 size={16} color={AppColors.warning} />;
+      case 'off':
+        return <VolumeX size={16} color={AppColors.textTertiary} />;
+    }
+  };
+
+  const getVoiceModeText = () => {
+    switch (voiceMode) {
+      case 'elevenlabs':
+        return 'Premium Voice';
+      case 'native':
+        return 'Basic Voice';
+      case 'off':
+        return 'Voice Off';
     }
   };
 
@@ -253,12 +393,27 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     <View style={[styles.container, style]}>
       <LiquidGlassCard style={styles.card}>
         <View style={styles.content}>
-          <Text style={styles.title}>Voice Food Logger</Text>
+          {/* Header with Voice Settings */}
+          <View style={styles.header}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Voice Food Logger</Text>
+              <TouchableOpacity
+                style={styles.voiceModeButton}
+                onPress={toggleVoiceMode}
+              >
+                {getVoiceModeIcon()}
+                <Text style={styles.voiceModeText}>{getVoiceModeText()}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <Text style={styles.subtitle}>
             {isListening 
               ? 'Listening... Describe what you ate'
               : isProcessing
               ? 'Processing your food log...'
+              : isSpeaking
+              ? 'Providing feedback...'
               : 'Tap to log food with your voice'
             }
           </Text>
@@ -267,18 +422,21 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
           <TouchableOpacity
             style={styles.voiceButtonContainer}
             onPress={isListening ? stopListening : startListening}
-            disabled={isProcessing}
+            disabled={isProcessing || isSpeaking}
             activeOpacity={0.8}
           >
             <Animated.View
               style={[
                 styles.voiceButton,
                 isListening && styles.voiceButtonActive,
-                { transform: [{ scale: pulseAnim }] },
+                isSpeaking && styles.voiceButtonSpeaking,
+                { transform: [{ scale: isListening ? pulseAnim : isSpeaking ? speakingAnim : 1 }] },
               ]}
             >
               {isProcessing ? (
                 <Loader2 size={32} color={AppColors.textPrimary} />
+              ) : isSpeaking ? (
+                <Volume2 size={32} color={AppColors.textPrimary} />
               ) : isListening ? (
                 <MicOff size={32} color={AppColors.textPrimary} />
               ) : (
@@ -332,12 +490,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  header: {
+    width: '100%',
+    marginBottom: 8,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: AppColors.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
+  },
+  voiceModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: AppColors.backgroundSecondary,
+    borderRadius: 12,
+    gap: 4,
+  },
+  voiceModeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: AppColors.textSecondary,
   },
   subtitle: {
     fontSize: 14,
@@ -365,6 +544,10 @@ const styles = StyleSheet.create({
   voiceButtonActive: {
     backgroundColor: AppColors.accent,
     shadowColor: AppColors.accent,
+  },
+  voiceButtonSpeaking: {
+    backgroundColor: AppColors.success,
+    shadowColor: AppColors.success,
   },
   transcriptContainer: {
     width: '100%',
