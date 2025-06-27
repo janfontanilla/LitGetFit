@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,23 @@ import {
   TextInput,
   TouchableOpacity,
   Animated,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Heart, Clock, Star, Zap, Plus } from 'lucide-react-native';
+import { Search, Heart, Clock, Star, Zap, Plus, Folder, X, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { BlurView } from 'expo-blur';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import CreateWorkoutModal from '@/components/CreateWorkoutModal';
 import AIGenerationTypeModal from '@/components/AIGenerationTypeModal';
 import { AppColors, Gradients } from '@/styles/colors';
+import { workoutService, Workout } from '@/lib/supabase';
+
+const { height } = Dimensions.get('window');
 
 interface Routine {
   id: string;
@@ -30,6 +36,8 @@ interface Routine {
   isSaved: boolean;
   category: string;
   exercises: number;
+  type: 'routine' | 'workout';
+  workouts?: Workout[]; // For routines that contain multiple workouts
 }
 
 const initialRoutines: Routine[] = [
@@ -44,6 +52,7 @@ const initialRoutines: Routine[] = [
     isSaved: true,
     category: 'Full Body',
     exercises: 8,
+    type: 'workout',
   },
   {
     id: '2',
@@ -56,6 +65,7 @@ const initialRoutines: Routine[] = [
     isSaved: true,
     category: 'Cardio',
     exercises: 6,
+    type: 'workout',
   },
   {
     id: '3',
@@ -68,6 +78,7 @@ const initialRoutines: Routine[] = [
     isSaved: false,
     category: 'Core',
     exercises: 10,
+    type: 'workout',
   },
   {
     id: '4',
@@ -80,31 +91,105 @@ const initialRoutines: Routine[] = [
     isSaved: true,
     category: 'Strength',
     exercises: 12,
+    type: 'workout',
+  },
+  {
+    id: 'routine-1',
+    name: 'Push Pull Legs Split',
+    description: 'Complete 6-day routine targeting all muscle groups',
+    duration: 270, // Total duration across all workouts
+    difficulty: 'Advanced',
+    equipment: ['Dumbbells', 'Barbell', 'Pull-up Bar'],
+    isFavorited: true,
+    isSaved: true,
+    category: 'Strength',
+    exercises: 36, // Total exercises across all workouts
+    type: 'routine',
+    workouts: [
+      {
+        id: 'w1',
+        name: 'Push Day 1',
+        description: 'Chest, shoulders, triceps',
+        exercises: [],
+        created_at: '',
+        updated_at: '',
+      },
+      {
+        id: 'w2',
+        name: 'Pull Day 1',
+        description: 'Back, biceps',
+        exercises: [],
+        created_at: '',
+        updated_at: '',
+      },
+      {
+        id: 'w3',
+        name: 'Legs Day 1',
+        description: 'Quads, hamstrings, glutes, calves',
+        exercises: [],
+        created_at: '',
+        updated_at: '',
+      },
+    ],
   },
 ];
 
 export default function RoutinesScreen() {
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites' | 'Saved'>('All');
+  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Favorites' | 'Routines'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [routines, setRoutines] = useState<Routine[]>(initialRoutines);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
+  const [showRoutineModal, setShowRoutineModal] = useState(false);
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAITypeModal, setShowAITypeModal] = useState(false);
 
   // Animation values
-  const searchWidthAnim = useRef(new Animated.Value(120)).current; // Start with base width
+  const searchWidthAnim = useRef(new Animated.Value(120)).current;
   const filtersOpacityAnim = useRef(new Animated.Value(1)).current;
   const filtersTranslateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    loadWorkouts();
+  }, []);
+
+  const loadWorkouts = async () => {
+    try {
+      const fetchedWorkouts = await workoutService.getWorkouts();
+      setWorkouts(fetchedWorkouts);
+      
+      // Convert workouts to routine format for display
+      const workoutRoutines: Routine[] = fetchedWorkouts.map(workout => ({
+        id: workout.id,
+        name: workout.name,
+        description: workout.description || '',
+        duration: 30, // Default duration
+        difficulty: 'Intermediate' as const,
+        equipment: ['Various'],
+        isFavorited: false,
+        isSaved: true,
+        category: 'Custom',
+        exercises: workout.exercises.length,
+        type: 'workout' as const,
+      }));
+      
+      // Combine with initial routines
+      setRoutines([...initialRoutines, ...workoutRoutines]);
+    } catch (error) {
+      console.error('Error loading workouts:', error);
+    }
+  };
 
   const filteredRoutines = routines.filter(routine => {
     let matchesFilter = true;
     
     if (selectedFilter === 'Favorites') {
       matchesFilter = routine.isFavorited;
-    } else if (selectedFilter === 'Saved') {
-      matchesFilter = routine.isSaved;
+    } else if (selectedFilter === 'Routines') {
+      matchesFilter = routine.type === 'routine';
     }
     
     const matchesSearch = routine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -117,7 +202,7 @@ export default function RoutinesScreen() {
     
     Animated.parallel([
       Animated.timing(searchWidthAnim, {
-        toValue: 280, // Expand to specific width
+        toValue: 280,
         duration: 300,
         useNativeDriver: false,
       }),
@@ -140,7 +225,7 @@ export default function RoutinesScreen() {
       
       Animated.parallel([
         Animated.timing(searchWidthAnim, {
-          toValue: 120, // Return to base width
+          toValue: 120,
           duration: 300,
           useNativeDriver: false,
         }),
@@ -175,6 +260,16 @@ export default function RoutinesScreen() {
           : routine
       )
     );
+  };
+
+  const handleRoutinePress = (routine: Routine) => {
+    if (routine.type === 'routine' && routine.workouts) {
+      setSelectedRoutine(routine);
+      setShowRoutineModal(true);
+    } else {
+      // Start single workout
+      console.log('Start workout:', routine.id);
+    }
   };
 
   // Modal handlers
@@ -293,17 +388,17 @@ export default function RoutinesScreen() {
             <TouchableOpacity
               style={[
                 styles.filterTab,
-                selectedFilter === 'Saved' && styles.activeFilterTab,
+                selectedFilter === 'Routines' && styles.activeFilterTab,
               ]}
-              onPress={() => setSelectedFilter('Saved')}
+              onPress={() => setSelectedFilter('Routines')}
             >
               <Text
                 style={[
                   styles.filterText,
-                  selectedFilter === 'Saved' && styles.activeFilterText,
+                  selectedFilter === 'Routines' && styles.activeFilterText,
                 ]}
               >
-                Saved
+                Routines
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -320,16 +415,16 @@ export default function RoutinesScreen() {
               <Text style={styles.emptyStateTitle}>
                 {selectedFilter === 'Favorites' 
                   ? 'No favorites yet' 
-                  : selectedFilter === 'Saved'
-                  ? 'No saved routines'
+                  : selectedFilter === 'Routines'
+                  ? 'No routines found'
                   : 'No routines found'
                 }
               </Text>
               <Text style={styles.emptyStateDescription}>
                 {selectedFilter === 'Favorites' 
                   ? 'Heart your favorite workouts to see them here'
-                  : selectedFilter === 'Saved'
-                  ? 'Save routines to access them quickly'
+                  : selectedFilter === 'Routines'
+                  ? 'Create multi-day routines to see them here'
                   : searchQuery 
                     ? 'Try adjusting your search terms'
                     : 'Create your first workout to get started'
@@ -350,7 +445,12 @@ export default function RoutinesScreen() {
               <LiquidGlassCard key={routine.id} style={styles.routineCard}>
                 <View style={styles.routineHeader}>
                   <View style={styles.routineInfo}>
-                    <Text style={styles.routineName}>{routine.name}</Text>
+                    <View style={styles.routineNameContainer}>
+                      {routine.type === 'routine' && (
+                        <Folder size={16} color={AppColors.primary} style={styles.routineIcon} />
+                      )}
+                      <Text style={styles.routineName}>{routine.name}</Text>
+                    </View>
                     <Text style={styles.routineDescription}>
                       {routine.description}
                     </Text>
@@ -370,7 +470,9 @@ export default function RoutinesScreen() {
                 <View style={styles.routineMeta}>
                   <View style={styles.metaItem}>
                     <Clock size={14} color={AppColors.textSecondary} />
-                    <Text style={styles.metaText}>{routine.duration} min</Text>
+                    <Text style={styles.metaText}>
+                      {routine.type === 'routine' ? `${routine.duration} min total` : `${routine.duration} min`}
+                    </Text>
                   </View>
                   <View style={styles.metaItem}>
                     <Star size={14} color={getDifficultyColor(routine.difficulty)} />
@@ -380,7 +482,9 @@ export default function RoutinesScreen() {
                   </View>
                   <View style={styles.metaItem}>
                     <Zap size={14} color={AppColors.textSecondary} />
-                    <Text style={styles.metaText}>{routine.exercises} exercises</Text>
+                    <Text style={styles.metaText}>
+                      {routine.type === 'routine' ? `${routine.workouts?.length || 0} workouts` : `${routine.exercises} exercises`}
+                    </Text>
                   </View>
                 </View>
 
@@ -392,8 +496,8 @@ export default function RoutinesScreen() {
                 </View>
 
                 <GlassButton
-                  title="Start Workout"
-                  onPress={() => console.log('Start workout:', routine.id)}
+                  title={routine.type === 'routine' ? 'View Routine' : 'Start Workout'}
+                  onPress={() => handleRoutinePress(routine)}
                   variant="primary"
                   style={styles.startButton}
                 />
@@ -401,6 +505,78 @@ export default function RoutinesScreen() {
             ))
           )}
         </ScrollView>
+
+        {/* Routine Detail Modal */}
+        <Modal
+          visible={showRoutineModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowRoutineModal(false)}
+        >
+          <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
+            <View style={styles.routineModalContainer}>
+              <LiquidGlassCard style={styles.routineModal}>
+                {/* Modal Header */}
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{selectedRoutine?.name}</Text>
+                  <TouchableOpacity 
+                    style={styles.closeButton} 
+                    onPress={() => setShowRoutineModal(false)}
+                  >
+                    <X size={24} color={AppColors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Routine Description */}
+                <Text style={styles.modalDescription}>
+                  {selectedRoutine?.description}
+                </Text>
+
+                {/* Workouts List */}
+                <ScrollView style={styles.workoutsList} showsVerticalScrollIndicator={false}>
+                  {selectedRoutine?.workouts?.map((workout, index) => (
+                    <TouchableOpacity
+                      key={workout.id}
+                      style={styles.workoutItem}
+                      onPress={() => {
+                        setShowRoutineModal(false);
+                        console.log('Start workout:', workout.id);
+                      }}
+                    >
+                      <LiquidGlassCard style={styles.workoutCard}>
+                        <View style={styles.workoutContent}>
+                          <View style={styles.workoutInfo}>
+                            <Text style={styles.workoutName}>
+                              Day {index + 1}: {workout.name}
+                            </Text>
+                            <Text style={styles.workoutDescription}>
+                              {workout.description}
+                            </Text>
+                          </View>
+                          <ChevronRight size={16} color={AppColors.textTertiary} />
+                        </View>
+                      </LiquidGlassCard>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                {/* Modal Actions */}
+                <View style={styles.modalActions}>
+                  <GlassButton
+                    title="Start Full Routine"
+                    onPress={() => {
+                      setShowRoutineModal(false);
+                      console.log('Start full routine:', selectedRoutine?.id);
+                    }}
+                    variant="primary"
+                    size="large"
+                    style={styles.startRoutineButton}
+                  />
+                </View>
+              </LiquidGlassCard>
+            </View>
+          </BlurView>
+        </Modal>
 
         {/* Modals */}
         <CreateWorkoutModal
@@ -473,7 +649,7 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingVertical: 4,
     paddingHorizontal: 10,
-    backgroundColor: AppColors.backgroundSecondary, // Match app background
+    backgroundColor: AppColors.backgroundSecondary,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: AppColors.border,
@@ -552,11 +728,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  routineNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  routineIcon: {
+    marginRight: 8,
+  },
   routineName: {
     fontSize: 18,
     fontWeight: '600',
     color: AppColors.textPrimary,
-    marginBottom: 4,
   },
   routineDescription: {
     fontSize: 14,
@@ -597,6 +780,83 @@ const styles = StyleSheet.create({
     color: AppColors.textTertiary,
   },
   startButton: {
+    width: '100%',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  routineModalContainer: {
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: height * 0.8,
+  },
+  routineModal: {
+    padding: 0,
+    maxHeight: height * 0.8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
+    flex: 1,
+    marginRight: 16,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 20,
+    paddingHorizontal: 24,
+  },
+  workoutsList: {
+    flex: 1,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  workoutItem: {
+    marginBottom: 12,
+  },
+  workoutCard: {
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  workoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  workoutInfo: {
+    flex: 1,
+  },
+  workoutName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+    marginBottom: 4,
+  },
+  workoutDescription: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+  },
+  modalActions: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  startRoutineButton: {
     width: '100%',
   },
 });
