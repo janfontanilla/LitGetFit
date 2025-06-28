@@ -273,7 +273,6 @@ export default function RoutinesScreen() {
         router.push({
           pathname: '/workout/start',
           params: { 
-            workoutId: routine.id,
             workoutData: JSON.stringify({
               id: workoutData.id,
               name: workoutData.name,
@@ -289,7 +288,6 @@ export default function RoutinesScreen() {
         router.push({
           pathname: '/workout/start',
           params: { 
-            workoutId: routine.id,
             workoutData: JSON.stringify({
               id: routine.id,
               name: routine.name,
@@ -312,6 +310,12 @@ export default function RoutinesScreen() {
       { name: 'Lunges', sets: '3', reps: '10 each leg', weight: 'Bodyweight', restTime: '60 seconds', order: 3 },
       { name: 'Mountain Climbers', sets: '3', reps: '20', weight: 'Bodyweight', restTime: '45 seconds', order: 4 },
       { name: 'Burpees', sets: '3', reps: '8', weight: 'Bodyweight', restTime: '90 seconds', order: 5 },
+      { name: 'Jumping Jacks', sets: '3', reps: '30', weight: 'Bodyweight', restTime: '45 seconds', order: 6 },
+      { name: 'High Knees', sets: '3', reps: '20', weight: 'Bodyweight', restTime: '45 seconds', order: 7 },
+      { name: 'Bicycle Crunches', sets: '3', reps: '15 each side', weight: 'Bodyweight', restTime: '60 seconds', order: 8 },
+      { name: 'Wall Sit', sets: '3', reps: '45 seconds', weight: 'Bodyweight', restTime: '90 seconds', order: 9 },
+      { name: 'Tricep Dips', sets: '3', reps: '10', weight: 'Bodyweight', restTime: '60 seconds', order: 10 },
+      { name: 'Russian Twists', sets: '3', reps: '20', weight: 'Bodyweight', restTime: '60 seconds', order: 11 },
     ];
     
     return mockExercises.slice(0, count).map((exercise, index) => ({
@@ -591,7 +595,6 @@ export default function RoutinesScreen() {
                         router.push({
                           pathname: '/workout/start',
                           params: { 
-                            workoutId: workout.id,
                             workoutData: JSON.stringify({
                               id: workout.id,
                               name: workout.name,
@@ -633,7 +636,6 @@ export default function RoutinesScreen() {
                         router.push({
                           pathname: '/workout/start',
                           params: { 
-                            workoutId: firstWorkout.id,
                             workoutData: JSON.stringify({
                               id: firstWorkout.id,
                               name: firstWorkout.name,

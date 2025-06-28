@@ -30,6 +30,7 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
 import { workoutService, Workout } from '@/lib/supabase';
+import { workoutProgressService } from '@/lib/workoutProgressService';
 
 interface WorkoutExercise {
   name: string;
@@ -38,13 +39,16 @@ interface WorkoutExercise {
   weight: string;
   restTime: string;
   order: number;
+  notes?: string;
 }
 
 interface WorkoutData {
+  id?: string;
   name: string;
   description: string;
   exercises: WorkoutExercise[];
   estimatedDuration: number;
+  targetedMuscles?: string[];
 }
 
 type WeightUnit = 'kg' | 'lbs';
@@ -101,31 +105,43 @@ export default function WorkoutStartScreen() {
 
   const loadWorkout = async () => {
     try {
-      if (params.workoutId) {
+      setIsLoading(true);
+      
+      if (params.workoutData) {
+        // Load from passed data (most common case)
+        const workoutData = JSON.parse(params.workoutData as string) as WorkoutData;
+        setWorkout(workoutData);
+        initializeWorkoutState(workoutData);
+      } else if (params.workoutId) {
         // Load from database
         const workouts = await workoutService.getWorkouts();
         const foundWorkout = workouts.find(w => w.id === params.workoutId);
         
         if (foundWorkout) {
           const workoutData: WorkoutData = {
+            id: foundWorkout.id,
             name: foundWorkout.name,
             description: foundWorkout.description || '',
             exercises: foundWorkout.exercises as WorkoutExercise[],
             estimatedDuration: 45, // Default duration
+            targetedMuscles: [],
           };
           setWorkout(workoutData);
           initializeWorkoutState(workoutData);
+        } else {
+          throw new Error('Workout not found');
         }
-      } else if (params.workoutData) {
-        // Load from passed data
-        const workoutData = JSON.parse(params.workoutData as string) as WorkoutData;
-        setWorkout(workoutData);
-        initializeWorkoutState(workoutData);
+      } else {
+        throw new Error('No workout data provided');
       }
     } catch (error) {
       console.error('Error loading workout:', error);
-      Alert.alert('Error', 'Failed to load workout');
-      router.back();
+      Alert.alert('Error', 'Failed to load workout', [
+        {
+          text: 'Go Back',
+          onPress: () => router.back(),
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +208,7 @@ export default function WorkoutStartScreen() {
     setWorkoutState('active');
   };
 
-  const endWorkout = () => {
+  const endWorkout = async () => {
     Alert.alert(
       'End Workout',
       'Are you sure you want to end this workout?',
@@ -201,9 +217,31 @@ export default function WorkoutStartScreen() {
         {
           text: 'End Workout',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             setWorkoutState('completed');
-            // Navigate back to routines with success message
+            
+            // Save workout session
+            try {
+              const completedSetsCount = getCompletedSetsCount();
+              const totalSets = getTotalSets();
+              const completedExercises = getCompletedExercisesCount();
+              
+              await workoutProgressService.createWorkoutSession({
+                workout_id: workout?.id,
+                workout_name: workout?.name || 'Unknown Workout',
+                duration: elapsedTime,
+                exercises_completed: completedExercises,
+                total_exercises: workout?.exercises.length || 0,
+                sets_completed: completedSetsCount,
+                total_sets: totalSets,
+                targeted_muscles: workout?.targetedMuscles || [],
+                completed_at: new Date().toISOString(),
+              });
+            } catch (error) {
+              console.error('Error saving workout session:', error);
+            }
+            
+            // Navigate back with success message
             setTimeout(() => {
               Alert.alert(
                 'Workout Complete!',
@@ -212,6 +250,10 @@ export default function WorkoutStartScreen() {
                   {
                     text: 'View Routines',
                     onPress: () => router.replace('/(tabs)/routines'),
+                  },
+                  {
+                    text: 'Go Home',
+                    onPress: () => router.replace('/(tabs)'),
                   },
                 ]
               );
@@ -234,12 +276,43 @@ export default function WorkoutStartScreen() {
       setRestTimer(restTime);
       setIsResting(true);
     }
+
+    // Check if workout is complete
+    const allExercisesComplete = workout?.exercises.every((_, index) => {
+      const exerciseSets = newCompletedSets[index.toString()] || [];
+      return exerciseSets.every(Boolean);
+    });
+
+    if (allExercisesComplete) {
+      setTimeout(() => {
+        endWorkout();
+      }, 1000);
+    }
   };
 
   const updateExerciseWeight = (exerciseIndex: number, weight: string) => {
     const newWeights = { ...exerciseWeights };
     newWeights[exerciseIndex.toString()] = weight;
     setExerciseWeights(newWeights);
+  };
+
+  const getTotalSets = () => {
+    return workout?.exercises.reduce((total, exercise) => {
+      return total + (parseInt(exercise.sets) || 0);
+    }, 0) || 0;
+  };
+
+  const getCompletedSetsCount = () => {
+    return Object.values(completedSets).reduce((total, sets) => {
+      return total + sets.filter(Boolean).length;
+    }, 0);
+  };
+
+  const getCompletedExercisesCount = () => {
+    return workout?.exercises.filter((_, index) => {
+      const sets = completedSets[index.toString()] || [];
+      return sets.every(Boolean);
+    }).length || 0;
   };
 
   if (isLoading) {

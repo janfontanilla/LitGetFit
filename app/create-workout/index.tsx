@@ -193,7 +193,16 @@ export default function CreateWorkoutScreen() {
             text: 'Start Workout',
             onPress: () => router.push({
               pathname: '/workout/start',
-              params: { workoutId: savedWorkout.id },
+              params: { 
+                workoutData: JSON.stringify({
+                  id: savedWorkout.id,
+                  name: savedWorkout.name,
+                  description: savedWorkout.description,
+                  exercises: savedWorkout.exercises,
+                  estimatedDuration: validExercises.length * 5,
+                  targetedMuscles,
+                })
+              },
             }),
           },
         ]
