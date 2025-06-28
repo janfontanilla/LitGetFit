@@ -17,6 +17,7 @@ import { ChevronLeft, Plus, Trash2, Play, GripVertical, RotateCcw } from 'lucide
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
+import MuscleGroupVisualization from '@/components/MuscleGroupVisualization';
 import { AppColors, Gradients } from '@/styles/colors';
 import { workoutService, WorkoutData } from '@/lib/supabase';
 
@@ -119,6 +120,35 @@ export default function CreateWorkoutScreen() {
     setWeightUnit(newUnit);
   };
 
+  const getTargetedMuscles = (): string[] => {
+    const muscles: string[] = [];
+    exercises.forEach(exercise => {
+      if (exercise.name.trim()) {
+        // Simple muscle detection based on exercise names
+        const exerciseName = exercise.name.toLowerCase();
+        if (exerciseName.includes('chest') || exerciseName.includes('bench') || exerciseName.includes('push')) {
+          muscles.push('chest');
+        }
+        if (exerciseName.includes('back') || exerciseName.includes('pull') || exerciseName.includes('row')) {
+          muscles.push('back');
+        }
+        if (exerciseName.includes('squat') || exerciseName.includes('leg') || exerciseName.includes('lunge')) {
+          muscles.push('legs');
+        }
+        if (exerciseName.includes('shoulder') || exerciseName.includes('press') && !exerciseName.includes('bench')) {
+          muscles.push('shoulders');
+        }
+        if (exerciseName.includes('bicep') || exerciseName.includes('tricep') || exerciseName.includes('arm')) {
+          muscles.push('arms');
+        }
+        if (exerciseName.includes('abs') || exerciseName.includes('core') || exerciseName.includes('plank')) {
+          muscles.push('abs');
+        }
+      }
+    });
+    return [...new Set(muscles)]; // Remove duplicates
+  };
+
   const handleSave = async () => {
     if (!workoutName.trim()) {
       Alert.alert('Missing Information', 'Please enter a workout name.');
@@ -148,10 +178,25 @@ export default function CreateWorkoutScreen() {
         return;
       }
 
+      // Show muscle group visualization and success message
+      const targetedMuscles = getTargetedMuscles();
+      
       Alert.alert(
         'Workout Saved!',
         `"${workoutName}" has been saved to your routines.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        [
+          {
+            text: 'View Routines',
+            onPress: () => router.replace('/(tabs)/routines'),
+          },
+          {
+            text: 'Start Workout',
+            onPress: () => router.push({
+              pathname: '/workout/start',
+              params: { workoutId: savedWorkout.id },
+            }),
+          },
+        ]
       );
     } catch (error) {
       console.error('Error saving workout:', error);
@@ -172,7 +217,22 @@ export default function CreateWorkoutScreen() {
       return;
     }
 
-    console.log('Preview workout:', { workoutName, exercises: validExercises });
+    // Create preview data
+    const workoutData = {
+      name: workoutName,
+      description: workoutDescription,
+      exercises: validExercises.map(({ id, ...exercise }) => exercise),
+      estimatedDuration: validExercises.length * 5, // Rough estimate
+      targetedMuscles: getTargetedMuscles(),
+    };
+
+    router.push({
+      pathname: '/create-workout/preview',
+      params: {
+        type: 'manual',
+        workoutData: JSON.stringify(workoutData),
+      },
+    });
   };
 
   return (
@@ -243,6 +303,13 @@ export default function CreateWorkoutScreen() {
               </View>
             </View>
           </LiquidGlassCard>
+
+          {/* Muscle Group Preview */}
+          {getTargetedMuscles().length > 0 && (
+            <LiquidGlassCard style={styles.muscleCard}>
+              <MuscleGroupVisualization targetedMuscles={getTargetedMuscles()} />
+            </LiquidGlassCard>
+          )}
 
           {/* Exercises */}
           <LiquidGlassCard style={styles.exercisesCard}>
@@ -497,6 +564,10 @@ const styles = StyleSheet.create({
   },
   workoutInfoCard: {
     margin: 20,
+    marginBottom: 16,
+  },
+  muscleCard: {
+    marginHorizontal: 20,
     marginBottom: 16,
   },
   exercisesCard: {
