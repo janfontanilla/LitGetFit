@@ -267,9 +267,57 @@ export default function RoutinesScreen() {
       setSelectedRoutine(routine);
       setShowRoutineModal(true);
     } else {
-      // Start single workout
-      console.log('Start workout:', routine.id);
+      // Start single workout - navigate to workout start screen
+      const workoutData = workouts.find(w => w.id === routine.id);
+      if (workoutData) {
+        router.push({
+          pathname: '/workout/start',
+          params: { 
+            workoutId: routine.id,
+            workoutData: JSON.stringify({
+              id: workoutData.id,
+              name: workoutData.name,
+              description: workoutData.description,
+              exercises: workoutData.exercises,
+              estimatedDuration: routine.duration,
+              targetedMuscles: [],
+            })
+          }
+        });
+      } else {
+        // For demo workouts, create mock data
+        router.push({
+          pathname: '/workout/start',
+          params: { 
+            workoutId: routine.id,
+            workoutData: JSON.stringify({
+              id: routine.id,
+              name: routine.name,
+              description: routine.description,
+              exercises: generateMockExercises(routine.exercises),
+              estimatedDuration: routine.duration,
+              targetedMuscles: [],
+            })
+          }
+        });
+      }
     }
+  };
+
+  const generateMockExercises = (count: number) => {
+    const mockExercises = [
+      { name: 'Push-ups', sets: '3', reps: '12', weight: 'Bodyweight', restTime: '60 seconds', order: 0 },
+      { name: 'Squats', sets: '3', reps: '15', weight: 'Bodyweight', restTime: '90 seconds', order: 1 },
+      { name: 'Plank', sets: '3', reps: '30 seconds', weight: 'Bodyweight', restTime: '60 seconds', order: 2 },
+      { name: 'Lunges', sets: '3', reps: '10 each leg', weight: 'Bodyweight', restTime: '60 seconds', order: 3 },
+      { name: 'Mountain Climbers', sets: '3', reps: '20', weight: 'Bodyweight', restTime: '45 seconds', order: 4 },
+      { name: 'Burpees', sets: '3', reps: '8', weight: 'Bodyweight', restTime: '90 seconds', order: 5 },
+    ];
+    
+    return mockExercises.slice(0, count).map((exercise, index) => ({
+      ...exercise,
+      order: index
+    }));
   };
 
   // Modal handlers
@@ -540,7 +588,20 @@ export default function RoutinesScreen() {
                       style={styles.workoutItem}
                       onPress={() => {
                         setShowRoutineModal(false);
-                        console.log('Start workout:', workout.id);
+                        router.push({
+                          pathname: '/workout/start',
+                          params: { 
+                            workoutId: workout.id,
+                            workoutData: JSON.stringify({
+                              id: workout.id,
+                              name: workout.name,
+                              description: workout.description,
+                              exercises: generateMockExercises(6),
+                              estimatedDuration: 45,
+                              targetedMuscles: [],
+                            })
+                          }
+                        });
                       }}
                     >
                       <LiquidGlassCard style={styles.workoutCard}>
@@ -566,7 +627,24 @@ export default function RoutinesScreen() {
                     title="Start Full Routine"
                     onPress={() => {
                       setShowRoutineModal(false);
-                      console.log('Start full routine:', selectedRoutine?.id);
+                      // Start with first workout in routine
+                      if (selectedRoutine?.workouts && selectedRoutine.workouts.length > 0) {
+                        const firstWorkout = selectedRoutine.workouts[0];
+                        router.push({
+                          pathname: '/workout/start',
+                          params: { 
+                            workoutId: firstWorkout.id,
+                            workoutData: JSON.stringify({
+                              id: firstWorkout.id,
+                              name: firstWorkout.name,
+                              description: firstWorkout.description,
+                              exercises: generateMockExercises(6),
+                              estimatedDuration: 45,
+                              targetedMuscles: [],
+                            })
+                          }
+                        });
+                      }
                     }}
                     variant="primary"
                     size="large"

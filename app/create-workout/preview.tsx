@@ -160,7 +160,17 @@ export default function PreviewScreen() {
               text: 'Start Workout',
               onPress: () => router.push({
                 pathname: '/workout/start',
-                params: { workoutId: savedWorkout.id },
+                params: { 
+                  workoutId: savedWorkout.id,
+                  workoutData: JSON.stringify({
+                    id: savedWorkout.id,
+                    name: savedWorkout.name,
+                    description: savedWorkout.description,
+                    exercises: savedWorkout.exercises,
+                    estimatedDuration: workout.estimatedDuration,
+                    targetedMuscles: workout.targetedMuscles,
+                  })
+                }
               }),
             },
           ]
@@ -182,7 +192,14 @@ export default function PreviewScreen() {
     router.push({
       pathname: '/workout/start',
       params: {
-        workoutData: JSON.stringify(workout),
+        workoutData: JSON.stringify({
+          id: 'preview-workout',
+          name: workout.name,
+          description: workout.description,
+          exercises: workout.exercises,
+          estimatedDuration: workout.estimatedDuration,
+          targetedMuscles: workout.targetedMuscles,
+        }),
       },
     });
   };

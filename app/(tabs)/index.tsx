@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Flame, Target, TrendingUp, Plus } from 'lucide-react-native';
+import { router } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -151,7 +152,7 @@ export default function HomeScreen() {
 
     if (todaysWorkout.id === 'create') {
       // Navigate to workout creation
-      console.log('Navigate to create workout');
+      router.push('/create-workout');
       return;
     }
 
@@ -160,8 +161,21 @@ export default function HomeScreen() {
       return;
     }
 
-    // Start the workout overlay
-    setShowWorkoutOverlay(true);
+    // Start the workout - navigate to workout start screen
+    router.push({
+      pathname: '/workout/start',
+      params: { 
+        workoutId: todaysWorkout.id,
+        workoutData: JSON.stringify({
+          id: todaysWorkout.id,
+          name: todaysWorkout.name,
+          description: todaysWorkout.description,
+          exercises: todaysWorkout.exercises,
+          estimatedDuration: todaysWorkout.estimatedDuration,
+          targetedMuscles: todaysWorkout.targetedMuscles,
+        })
+      }
+    });
   };
 
   const handleWorkoutComplete = async (workoutStats: any) => {
@@ -369,7 +383,7 @@ export default function HomeScreen() {
             
             <GlassButton
               title="Log Meal"
-              onPress={() => {}}
+              onPress={() => router.push('/(tabs)/nutrition')}
               variant="secondary"
               size="small"
               style={styles.logButton}
@@ -381,21 +395,30 @@ export default function HomeScreen() {
             <Text style={styles.cardTitle}>Quick Actions</Text>
             
             <View style={styles.quickActions}>
-              <TouchableOpacity style={styles.quickAction}>
+              <TouchableOpacity 
+                style={styles.quickAction}
+                onPress={() => router.push('/create-workout')}
+              >
                 <View style={styles.quickActionIcon}>
                   <Plus size={20} color={AppColors.primary} />
                 </View>
                 <Text style={styles.quickActionText}>Create Workout</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.quickAction}>
+              <TouchableOpacity 
+                style={styles.quickAction}
+                onPress={() => router.push('/(tabs)/profile')}
+              >
                 <View style={styles.quickActionIcon}>
                   <Target size={20} color={AppColors.success} />
                 </View>
                 <Text style={styles.quickActionText}>Set Goals</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.quickAction}>
+              <TouchableOpacity 
+                style={styles.quickAction}
+                onPress={() => router.push('/(tabs)/routines')}
+              >
                 <View style={styles.quickActionIcon}>
                   <TrendingUp size={20} color={AppColors.warning} />
                 </View>
@@ -404,23 +427,6 @@ export default function HomeScreen() {
             </View>
           </LiquidGlassCard>
         </ScrollView>
-
-        {/* Workout Overlay */}
-        {todaysWorkout && todaysWorkout.id !== 'create' && todaysWorkout.id !== 'completed' && (
-          <WorkoutOverlay
-            visible={showWorkoutOverlay}
-            workout={{
-              id: todaysWorkout.id,
-              name: todaysWorkout.name,
-              description: todaysWorkout.description,
-              exercises: todaysWorkout.exercises,
-              estimatedDuration: todaysWorkout.estimatedDuration,
-              targetedMuscles: todaysWorkout.targetedMuscles,
-            }}
-            onClose={() => setShowWorkoutOverlay(false)}
-            onComplete={handleWorkoutComplete}
-          />
-        )}
       </SafeAreaView>
     </LinearGradient>
   );
