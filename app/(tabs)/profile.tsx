@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Settings, Bell, Shield, Cloud, Watch, Palette, CircleHelp as HelpCircle, Star, LogOut, ChevronRight, Crown, Zap, CreditCard as Edit } from 'lucide-react-native';
+import { User, Settings, Bell, Shield, Cloud, Watch, Palette, CircleHelp as HelpCircle, Star, LogOut, ChevronRight, Crown, Zap, CreditCard as Edit, UserCircle } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
 import { userProfileService, UserProfile } from '@/lib/supabase';
+import { workoutProgressService } from '@/lib/workoutProgressService';
 import { router } from 'expo-router';
 
 interface SettingsOption {
@@ -32,25 +33,57 @@ interface SettingsOption {
   destructive?: boolean;
 }
 
+interface UserStats {
+  totalWorkouts: number;
+  currentStreak: number;
+  totalDuration: number;
+  averageDuration: number;
+  favoriteWorkouts: string[];
+  completionRate: number;
+}
+
 export default function ProfileScreen() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [cloudSync, setCloudSync] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadUserProfile();
+    loadUserData();
   }, []);
 
-  const loadUserProfile = async () => {
+  const loadUserData = async () => {
     try {
+      setIsLoading(true);
+      
+      // Load user profile
       const profiles = await userProfileService.getAllProfiles();
       if (profiles.length > 0) {
-        setUserProfile(profiles[0]); // Get the first profile
+        setUserProfile(profiles[0]);
       }
+
+      // Load user workout statistics
+      const weeklyStats = await workoutProgressService.getWeeklyStats();
+      const allSessions = await workoutProgressService.getWorkoutSessions(100);
+      
+      const stats: UserStats = {
+        totalWorkouts: allSessions.length,
+        currentStreak: weeklyStats.streak,
+        totalDuration: allSessions.reduce((sum, session) => sum + session.duration, 0),
+        averageDuration: allSessions.length > 0 
+          ? Math.round(allSessions.reduce((sum, session) => sum + session.duration, 0) / allSessions.length)
+          : 0,
+        favoriteWorkouts: [], // Could be implemented with a favorites system
+        completionRate: allSessions.length > 0
+          ? Math.round((allSessions.reduce((sum, session) => sum + (session.exercises_completed / session.total_exercises), 0) / allSessions.length) * 100)
+          : 0,
+      };
+      
+      setUserStats(stats);
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Error loading user data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -78,11 +111,37 @@ export default function ProfileScreen() {
     );
   };
 
-  const userStats = [
-    { label: 'Workouts', value: '128', icon: <Zap size={16} color={AppColors.primary} /> },
-    { label: 'Streak', value: '12 days', icon: <Zap size={16} color={AppColors.accent} /> },
-    { label: 'Level', value: 'Expert', icon: <Crown size={16} color={AppColors.warning} /> },
-  ];
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const getDisplayName = () => {
+    if (userProfile?.name) {
+      return userProfile.name;
+    }
+    return 'Fitness Enthusiast';
+  };
+
+  const getDisplayEmail = () => {
+    if (userProfile?.name) {
+      return `${userProfile.name.toLowerCase().replace(' ', '.')}@email.com`;
+    }
+    return 'user@email.com';
+  };
+
+  const getFitnessLevel = () => {
+    if (!userStats) return 'Beginner';
+    
+    if (userStats.totalWorkouts >= 50) return 'Expert';
+    if (userStats.totalWorkouts >= 20) return 'Intermediate';
+    return 'Beginner';
+  };
 
   const settingsOptions: SettingsOption[] = [
     {
@@ -203,20 +262,6 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
-  const getDisplayName = () => {
-    if (userProfile?.name) {
-      return userProfile.name;
-    }
-    return 'Fitness Enthusiast';
-  };
-
-  const getDisplayEmail = () => {
-    if (userProfile?.name) {
-      return `${userProfile.name.toLowerCase().replace(' ', '.')}@email.com`;
-    }
-    return 'user@email.com';
-  };
-
   if (isLoading) {
     return (
       <LinearGradient colors={Gradients.background} style={styles.container}>
@@ -241,12 +286,9 @@ export default function ProfileScreen() {
           <LiquidGlassCard style={styles.profileCard}>
             <View style={styles.profileHeader}>
               <TouchableOpacity style={styles.profileImageContainer}>
-                <Image
-                  source={{ 
-                    uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2' 
-                  }}
-                  style={styles.profileImage}
-                />
+                <View style={styles.profileImagePlaceholder}>
+                  <UserCircle size={64} color={AppColors.primary} />
+                </View>
                 <TouchableOpacity style={styles.editBadge} onPress={handleEditProfile}>
                   <Edit size={12} color={AppColors.textPrimary} />
                 </TouchableOpacity>
@@ -275,18 +317,54 @@ export default function ProfileScreen() {
               </View>
             </View>
             
-            {/* Stats */}
+            {/* Enhanced Stats */}
             <View style={styles.statsContainer}>
-              {userStats.map((stat, index) => (
-                <View key={index} style={styles.statItem}>
-                  <View style={styles.statIcon}>
-                    {stat.icon}
-                  </View>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
+              <View style={styles.statItem}>
+                <View style={styles.statIcon}>
+                  <Zap size={16} color={AppColors.primary} />
                 </View>
-              ))}
+                <Text style={styles.statValue}>{userStats?.totalWorkouts || 0}</Text>
+                <Text style={styles.statLabel}>Workouts</Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statIcon}>
+                  <Zap size={16} color={AppColors.accent} />
+                </View>
+                <Text style={styles.statValue}>{userStats?.currentStreak || 0} days</Text>
+                <Text style={styles.statLabel}>Streak</Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statIcon}>
+                  <Crown size={16} color={AppColors.warning} />
+                </View>
+                <Text style={styles.statValue}>{getFitnessLevel()}</Text>
+                <Text style={styles.statLabel}>Level</Text>
+              </View>
             </View>
+
+            {/* Additional Stats Row */}
+            {userStats && userStats.totalWorkouts > 0 && (
+              <View style={styles.additionalStats}>
+                <View style={styles.additionalStatItem}>
+                  <Text style={styles.additionalStatLabel}>Total Time</Text>
+                  <Text style={styles.additionalStatValue}>
+                    {formatDuration(userStats.totalDuration)}
+                  </Text>
+                </View>
+                <View style={styles.additionalStatItem}>
+                  <Text style={styles.additionalStatLabel}>Avg Session</Text>
+                  <Text style={styles.additionalStatValue}>
+                    {formatDuration(userStats.averageDuration)}
+                  </Text>
+                </View>
+                <View style={styles.additionalStatItem}>
+                  <Text style={styles.additionalStatLabel}>Completion</Text>
+                  <Text style={styles.additionalStatValue}>
+                    {userStats.completionRate}%
+                  </Text>
+                </View>
+              </View>
+            )}
           </LiquidGlassCard>
 
           {/* Settings */}
@@ -338,7 +416,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 130, // Increased from 120 to 130
+    paddingBottom: 130,
   },
   profileCard: {
     margin: 20,
@@ -353,10 +431,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginRight: 16,
   },
-  profileImage: {
+  profileImagePlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
+    backgroundColor: AppColors.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: AppColors.border,
   },
   editBadge: {
     position: 'absolute',
@@ -409,6 +492,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 16,
   },
   statItem: {
     alignItems: 'center',
@@ -430,6 +514,26 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
+    color: AppColors.textSecondary,
+  },
+  additionalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.border,
+  },
+  additionalStatItem: {
+    alignItems: 'center',
+  },
+  additionalStatLabel: {
+    fontSize: 11,
+    color: AppColors.textTertiary,
+    marginBottom: 4,
+  },
+  additionalStatValue: {
+    fontSize: 14,
+    fontWeight: '600',
     color: AppColors.textSecondary,
   },
   settingsCard: {
