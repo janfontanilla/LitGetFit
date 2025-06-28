@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,20 +9,214 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Play, Flame, Target, TrendingUp } from 'lucide-react-native';
+import { Play, Flame, Target, TrendingUp, Plus } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import ProgressRing from '@/components/ProgressRing';
+import WorkoutOverlay from '@/components/WorkoutOverlay';
 import { AppColors, Gradients } from '@/styles/colors';
+import { workoutService, Workout } from '@/lib/supabase';
+import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
+
+interface TodaysWorkout {
+  id: string;
+  name: string;
+  description: string;
+  exercises: any[];
+  estimatedDuration: number;
+  targetedMuscles: string[];
+  progress?: number;
+}
 
 export default function HomeScreen() {
+  const [todaysWorkout, setTodaysWorkout] = useState<TodaysWorkout | null>(null);
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
+  const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const currentHour = new Date().getHours();
   const getGreeting = () => {
     if (currentHour < 12) return 'Good Morning';
     if (currentHour < 17) return 'Good Afternoon';
     return 'Good Evening';
   };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load weekly stats
+      const stats = await workoutProgressService.getWeeklyStats();
+      setWeeklyStats(stats);
+
+      // Load today's workout or suggest one
+      await loadTodaysWorkout();
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadTodaysWorkout = async () => {
+    try {
+      // Check if user already completed a workout today
+      const todaysSession = await workoutProgressService.getTodaysWorkout();
+      
+      if (todaysSession) {
+        // User already worked out today, show completion status
+        setTodaysWorkout({
+          id: 'completed',
+          name: todaysSession.workout_name,
+          description: 'Completed today',
+          exercises: [],
+          estimatedDuration: todaysSession.duration,
+          targetedMuscles: todaysSession.targeted_muscles,
+          progress: 1.0,
+        });
+        return;
+      }
+
+      // Get user's workouts and suggest one
+      const workouts = await workoutService.getWorkouts();
+      
+      if (workouts.length > 0) {
+        // Pick a random workout or use smart selection logic
+        const suggestedWorkout = workouts[Math.floor(Math.random() * workouts.length)];
+        
+        setTodaysWorkout({
+          id: suggestedWorkout.id,
+          name: suggestedWorkout.name,
+          description: suggestedWorkout.description || 'Ready to start',
+          exercises: suggestedWorkout.exercises,
+          estimatedDuration: 45, // Default duration
+          targetedMuscles: extractTargetedMuscles(suggestedWorkout.exercises),
+          progress: 0,
+        });
+      } else {
+        // No workouts available, suggest creating one
+        setTodaysWorkout({
+          id: 'create',
+          name: 'Create Your First Workout',
+          description: 'Get started with a personalized routine',
+          exercises: [],
+          estimatedDuration: 30,
+          targetedMuscles: [],
+          progress: 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading today\'s workout:', error);
+    }
+  };
+
+  const extractTargetedMuscles = (exercises: any[]): string[] => {
+    const muscles: string[] = [];
+    
+    exercises.forEach(exercise => {
+      if (exercise.name) {
+        const exerciseName = exercise.name.toLowerCase();
+        if (exerciseName.includes('chest') || exerciseName.includes('bench') || exerciseName.includes('push')) {
+          muscles.push('chest');
+        }
+        if (exerciseName.includes('back') || exerciseName.includes('pull') || exerciseName.includes('row')) {
+          muscles.push('back');
+        }
+        if (exerciseName.includes('squat') || exerciseName.includes('leg') || exerciseName.includes('lunge')) {
+          muscles.push('legs');
+        }
+        if (exerciseName.includes('shoulder') || exerciseName.includes('press') && !exerciseName.includes('bench')) {
+          muscles.push('shoulders');
+        }
+        if (exerciseName.includes('bicep') || exerciseName.includes('tricep') || exerciseName.includes('arm')) {
+          muscles.push('arms');
+        }
+        if (exerciseName.includes('abs') || exerciseName.includes('core') || exerciseName.includes('plank')) {
+          muscles.push('abs');
+        }
+      }
+    });
+    
+    return [...new Set(muscles)];
+  };
+
+  const handleStartWorkout = () => {
+    if (!todaysWorkout) return;
+
+    if (todaysWorkout.id === 'create') {
+      // Navigate to workout creation
+      console.log('Navigate to create workout');
+      return;
+    }
+
+    if (todaysWorkout.id === 'completed') {
+      // Already completed, maybe show stats or suggest another workout
+      return;
+    }
+
+    // Start the workout overlay
+    setShowWorkoutOverlay(true);
+  };
+
+  const handleWorkoutComplete = async (workoutStats: any) => {
+    try {
+      // Save workout session
+      await workoutProgressService.createWorkoutSession({
+        workout_id: workoutStats.workoutId,
+        workout_name: workoutStats.workoutName,
+        duration: workoutStats.duration,
+        exercises_completed: workoutStats.exercisesCompleted,
+        total_exercises: workoutStats.totalExercises,
+        sets_completed: workoutStats.setsCompleted,
+        total_sets: workoutStats.totalSets,
+        targeted_muscles: workoutStats.targetedMuscles,
+        completed_at: workoutStats.completedAt.toISOString(),
+      });
+
+      // Refresh dashboard data
+      await loadDashboardData();
+      
+      // Close overlay
+      setShowWorkoutOverlay(false);
+    } catch (error) {
+      console.error('Error saving workout session:', error);
+      setShowWorkoutOverlay(false);
+    }
+  };
+
+  const getWorkoutButtonTitle = () => {
+    if (!todaysWorkout) return 'Loading...';
+    
+    if (todaysWorkout.id === 'create') return 'Create Workout';
+    if (todaysWorkout.id === 'completed') return 'Workout Complete ✓';
+    if (todaysWorkout.progress && todaysWorkout.progress > 0) return 'Continue Workout';
+    
+    return 'Start Workout';
+  };
+
+  const getWorkoutButtonVariant = () => {
+    if (!todaysWorkout) return 'secondary';
+    if (todaysWorkout.id === 'completed') return 'secondary';
+    return 'primary';
+  };
+
+  if (isLoading) {
+    return (
+      <LinearGradient colors={Gradients.background} style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading your fitness dashboard...</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
@@ -47,81 +241,100 @@ export default function HomeScreen() {
           </View>
 
           {/* Today's Workout Card */}
-          <LiquidGlassCard style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Today's Workout</Text>
-              <Play size={20} color={AppColors.primary} />
-            </View>
-            
-            <View style={styles.workoutInfo}>
-              <View style={styles.workoutDetails}>
-                <Text style={styles.workoutName}>Upper Body Strength</Text>
-                <Text style={styles.workoutMeta}>45 min • Intermediate</Text>
-                
-                <View style={styles.workoutStats}>
-                  <Text style={styles.statText}>3/5 exercises completed</Text>
-                </View>
+          {todaysWorkout && (
+            <LiquidGlassCard style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Today's Workout</Text>
+                {todaysWorkout.id === 'completed' ? (
+                  <Target size={20} color={AppColors.success} />
+                ) : (
+                  <Play size={20} color={AppColors.primary} />
+                )}
               </View>
               
-              <View style={styles.progressContainer}>
-                <ProgressRing progress={0.6} size={60} strokeWidth={6} />
-                <Text style={styles.progressText}>60%</Text>
+              <View style={styles.workoutInfo}>
+                <View style={styles.workoutDetails}>
+                  <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
+                  <Text style={styles.workoutMeta}>
+                    {todaysWorkout.estimatedDuration} min • {todaysWorkout.description}
+                  </Text>
+                  
+                  {todaysWorkout.exercises.length > 0 && (
+                    <View style={styles.workoutStats}>
+                      <Text style={styles.statText}>
+                        {todaysWorkout.exercises.length} exercises
+                        {todaysWorkout.targetedMuscles.length > 0 && 
+                          ` • ${todaysWorkout.targetedMuscles.join(', ')}`
+                        }
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                
+                {todaysWorkout.progress !== undefined && (
+                  <View style={styles.progressContainer}>
+                    <ProgressRing progress={todaysWorkout.progress} size={60} strokeWidth={6} />
+                    <Text style={styles.progressText}>
+                      {Math.round(todaysWorkout.progress * 100)}%
+                    </Text>
+                  </View>
+                )}
               </View>
-            </View>
-            
-            <GlassButton
-              title="Continue Workout"
-              onPress={() => {}}
-              variant="primary"
-              style={styles.workoutButton}
-            />
-          </LiquidGlassCard>
+              
+              <GlassButton
+                title={getWorkoutButtonTitle()}
+                onPress={handleStartWorkout}
+                variant={getWorkoutButtonVariant()}
+                style={styles.workoutButton}
+                disabled={todaysWorkout.id === 'completed'}
+              />
+            </LiquidGlassCard>
+          )}
 
           {/* Weekly Progress Card */}
-          <LiquidGlassCard style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Weekly Progress</Text>
-              <TrendingUp size={20} color={AppColors.success} />
-            </View>
-            
-            <View style={styles.progressStats}>
-              <View style={styles.statItem}>
-                <View style={styles.statIcon}>
-                  <Flame size={16} color={AppColors.accent} />
-                </View>
-                <Text style={styles.statLabel}>Current Streak</Text>
-                <Text style={styles.statValue}>7 days</Text>
+          {weeklyStats && (
+            <LiquidGlassCard style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Weekly Progress</Text>
+                <TrendingUp size={20} color={AppColors.success} />
               </View>
               
-              <View style={styles.statItem}>
-                <View style={styles.statIcon}>
-                  <Target size={16} color={AppColors.primary} />
+              <View style={styles.progressStats}>
+                <View style={styles.statItem}>
+                  <View style={styles.statIcon}>
+                    <Flame size={16} color={AppColors.accent} />
+                  </View>
+                  <Text style={styles.statLabel}>Current Streak</Text>
+                  <Text style={styles.statValue}>{weeklyStats.streak} days</Text>
                 </View>
-                <Text style={styles.statLabel}>This Week</Text>
-                <Text style={styles.statValue}>4/5 workouts</Text>
+                
+                <View style={styles.statItem}>
+                  <View style={styles.statIcon}>
+                    <Target size={16} color={AppColors.primary} />
+                  </View>
+                  <Text style={styles.statLabel}>This Week</Text>
+                  <Text style={styles.statValue}>{weeklyStats.totalWorkouts}/5 workouts</Text>
+                </View>
               </View>
-            </View>
-            
-            {/* Weekly Chart Placeholder */}
-            <View style={styles.chartContainer}>
-              <View style={styles.chartBars}>
-                {[0.8, 1.0, 0.6, 0.9, 0.7, 0.4, 0.9].map((height, index) => (
-                  <View 
-                    key={index}
-                    style={[
-                      styles.chartBar,
-                      { height: height * 40 }
-                    ]}
-                  />
-                ))}
+              
+              {/* Weekly Chart */}
+              <View style={styles.chartContainer}>
+                <View style={styles.chartBars}>
+                  {Object.entries(weeklyStats.workoutsByDay).map(([day, count]) => (
+                    <View key={day} style={styles.chartBarContainer}>
+                      <View 
+                        style={[
+                          styles.chartBar,
+                          { height: Math.max(4, count * 20) }
+                        ]}
+                      />
+                      <Text style={styles.chartLabel}>{day.charAt(0)}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
-              <View style={styles.chartLabels}>
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
-                  <Text key={index} style={styles.chartLabel}>{day}</Text>
-                ))}
-              </View>
-            </View>
-          </LiquidGlassCard>
+            </LiquidGlassCard>
+          )}
 
           {/* Daily Nutrition Card */}
           <LiquidGlassCard style={styles.card}>
@@ -163,7 +376,51 @@ export default function HomeScreen() {
             />
           </LiquidGlassCard>
 
+          {/* Quick Actions */}
+          <LiquidGlassCard style={styles.card}>
+            <Text style={styles.cardTitle}>Quick Actions</Text>
+            
+            <View style={styles.quickActions}>
+              <TouchableOpacity style={styles.quickAction}>
+                <View style={styles.quickActionIcon}>
+                  <Plus size={20} color={AppColors.primary} />
+                </View>
+                <Text style={styles.quickActionText}>Create Workout</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.quickAction}>
+                <View style={styles.quickActionIcon}>
+                  <Target size={20} color={AppColors.success} />
+                </View>
+                <Text style={styles.quickActionText}>Set Goals</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.quickAction}>
+                <View style={styles.quickActionIcon}>
+                  <TrendingUp size={20} color={AppColors.warning} />
+                </View>
+                <Text style={styles.quickActionText}>View Progress</Text>
+              </TouchableOpacity>
+            </View>
+          </LiquidGlassCard>
         </ScrollView>
+
+        {/* Workout Overlay */}
+        {todaysWorkout && todaysWorkout.id !== 'create' && todaysWorkout.id !== 'completed' && (
+          <WorkoutOverlay
+            visible={showWorkoutOverlay}
+            workout={{
+              id: todaysWorkout.id,
+              name: todaysWorkout.name,
+              description: todaysWorkout.description,
+              exercises: todaysWorkout.exercises,
+              estimatedDuration: todaysWorkout.estimatedDuration,
+              targetedMuscles: todaysWorkout.targetedMuscles,
+            }}
+            onClose={() => setShowWorkoutOverlay(false)}
+            onComplete={handleWorkoutComplete}
+          />
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -176,11 +433,20 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: AppColors.textSecondary,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 130, // Increased from 120 to 130
+    paddingBottom: 130,
   },
   header: {
     flexDirection: 'row',
@@ -305,23 +571,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 50,
+    height: 60,
     marginBottom: 8,
   },
+  chartBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
   chartBar: {
-    width: 24,
+    width: 20,
     backgroundColor: AppColors.primary,
     borderRadius: 4,
     opacity: 0.8,
-  },
-  chartLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   chartLabel: {
     fontSize: 12,
     color: AppColors.textTertiary,
-    width: 24,
     textAlign: 'center',
   },
   calorieCount: {
@@ -369,5 +635,29 @@ const styles = StyleSheet.create({
   },
   logButton: {
     alignSelf: 'flex-start',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  quickAction: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quickActionText: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
