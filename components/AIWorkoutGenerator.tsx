@@ -7,7 +7,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Zap, Dumbbell, Clock, Target, Loader2 } from 'lucide-react-native';
+import { Zap, Dumbbell, Clock, Target, Loader as Loader2 } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
