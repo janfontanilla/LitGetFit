@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, Dimensions } from 'react-native';
 import { usePathname } from 'expo-router';
 import ResponsiveNavigation from './ResponsiveNavigation';
+import { useSession } from '@/hooks/useSession';
 
 const { width } = Dimensions.get('window');
 
@@ -13,8 +14,9 @@ export default function NavigationWrapper({ children }: NavigationWrapperProps) 
   const isDesktop = Platform.OS === 'web' && width >= 768;
   const pathname = usePathname();
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const { session, isLoading } = useSession();
 
-  const showNavigation = !pathname.startsWith('/onboarding') && !pathname.startsWith('/(auth)');
+  const showNavigation = !!session && !pathname.startsWith('/onboarding') && !pathname.startsWith('/(auth)');
 
   // This is a bit of a hack to communicate collapse state
   // In a real app, this would be managed with a global state manager (like Zustand or Redux)
