@@ -52,12 +52,6 @@ const navigationItems: NavigationItem[] = [
     icon: Utensils,
     route: '/(tabs)/nutrition',
   },
-  {
-    id: 'progress',
-    title: 'Progress',
-    icon: TrendingUp,
-    route: '/(tabs)/profile',
-  },
 ];
 
 const secondaryItems: NavigationItem[] = [
@@ -106,8 +100,13 @@ export default function ResponsiveNavigation() {
   };
 
   const isActiveRoute = (route: string) => {
-    if (route === '/(tabs)' && pathname === '/') return true;
-    return pathname.startsWith(route.replace('/(tabs)', ''));
+    const processedRoute = route.replace('/(tabs)', '');
+    // Handle dashboard route, which becomes an empty string
+    if (processedRoute === '') {
+      return pathname === '/';
+    }
+    // Handle other routes
+    return pathname.startsWith(processedRoute);
   };
 
   const renderNavigationItem = (item: NavigationItem, isSecondary = false) => {

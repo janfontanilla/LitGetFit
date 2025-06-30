@@ -1,159 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { Zap } from 'lucide-react-native';
+import { useOnboardingStore } from '@/store/onboardingStore';
 
 import GlassButton from '@/components/GlassButton';
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import { AppColors, Gradients } from '@/styles/colors';
 import { userProfileService } from '@/lib/supabase';
 
-export default function WelcomeScreen() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasProfile, setHasProfile] = useState(false);
+export default function StartPage() {
+  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
 
-  useEffect(() => {
-    checkUserProfile();
-  }, []);
-
-  const checkUserProfile = async () => {
-    try {
-      // Check if any user profiles exist
-      const profiles = await userProfileService.getAllProfiles();
-      
-      if (profiles.length > 0) {
-        // User has completed onboarding, go to main app
-        setHasProfile(true);
-        router.replace('/(tabs)');
-      } else {
-        // No profile found, show welcome screen
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error('Error checking user profile:', error);
-      // On error, show welcome screen
-      setIsLoading(false);
-    }
-  };
-
-  const startOnboarding = () => {
-    router.push('/onboarding');
-  };
-
-  const goToApp = () => {
-    router.replace('/(tabs)');
-  };
-
-  if (isLoading) {
+  // Show a loading spinner while the store is rehydrating from storage
+  if (!_hasHydrated) {
     return (
-      <LinearGradient colors={Gradients.background} style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <View style={styles.logoContainer}>
-              <Zap size={48} color={AppColors.primary} />
-            </View>
-            <Text style={styles.loadingText}>Loading Lit Get Fit...</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A0A0A' }}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
     );
   }
 
-  return (
-    <LinearGradient colors={Gradients.background} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Hero Section */}
-          <View style={styles.heroSection}>
-            <View style={styles.logoContainer}>
-              <Zap size={64} color={AppColors.primary} />
-            </View>
-            <Text style={styles.appName}>Lit Get Fit</Text>
-            <Text style={styles.tagline}>
-              Your personal AI-powered fitness companion
-            </Text>
-          </View>
-
-          {/* Features Preview */}
-          <View style={styles.featuresContainer}>
-            <LiquidGlassCard style={styles.featureCard}>
-              <View style={styles.featureContent}>
-                <Image
-                  source={{ uri: 'https://images.pexels.com/photos/416778/pexels-photo-416778.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=2' }}
-                  style={styles.featureImage}
-                />
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>AI Form Analysis</Text>
-                  <Text style={styles.featureDescription}>
-                    Real-time feedback on your workout form using advanced AI
-                  </Text>
-                </View>
-              </View>
-            </LiquidGlassCard>
-
-            <LiquidGlassCard style={styles.featureCard}>
-              <View style={styles.featureContent}>
-                <Image
-                  source={{ uri: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=2' }}
-                  style={styles.featureImage}
-                />
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>Nutrition Coaching</Text>
-                  <Text style={styles.featureDescription}>
-                    Personalized meal plans and nutrition guidance
-                  </Text>
-                </View>
-              </View>
-            </LiquidGlassCard>
-
-            <LiquidGlassCard style={styles.featureCard}>
-              <View style={styles.featureContent}>
-                <Image
-                  source={{ uri: 'https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=2' }}
-                  style={styles.featureImage}
-                />
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>Custom Workouts</Text>
-                  <Text style={styles.featureDescription}>
-                    Tailored workout routines based on your goals
-                  </Text>
-                </View>
-              </View>
-            </LiquidGlassCard>
-          </View>
-
-          {/* CTA Section */}
-          <View style={styles.ctaSection}>
-            <GlassButton
-              title="Get Started"
-              onPress={startOnboarding}
-              variant="primary"
-              size="large"
-              style={styles.getStartedButton}
-            />
-            {hasProfile && (
-              <GlassButton
-                title="Continue to App"
-                onPress={goToApp}
-                variant="secondary"
-                size="medium"
-                style={styles.continueButton}
-              />
-            )}
-            <Text style={styles.disclaimer}>
-              Join thousands of users achieving their fitness goals
-            </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
-  );
+  // Once hydrated, redirect based on onboarding status
+  if (hasCompletedOnboarding) {
+    return <Redirect href="/(tabs)" />;
+  } else {
+    return <Redirect href="/onboarding" />;
+  }
 }
 
 const styles = StyleSheet.create({
