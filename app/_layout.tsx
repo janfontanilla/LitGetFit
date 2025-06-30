@@ -1,6 +1,6 @@
 import { Slot, useSegments, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { AppColors } from '@/styles/colors';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +11,7 @@ const InitialLayout = () => {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('[LAYOUT] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding, 'Segments:', segments);
     if (!_hasHydrated) return;
     const inOnboarding = segments[0] === 'onboarding';
     if (!hasCompletedOnboarding && !inOnboarding) {
@@ -24,6 +25,7 @@ const InitialLayout = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={AppColors.primary} />
+        <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
       </View>
     );
   }
