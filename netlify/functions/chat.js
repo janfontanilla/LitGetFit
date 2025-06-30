@@ -10,7 +10,7 @@ exports.handler = async function(event, context) {
   }
 
   const { message, conversationHistory, userProfile } = JSON.parse(event.body);
-  const groqApiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+  const groqApiKey = process.env.GROQ_API_KEY;
 
   if (!groqApiKey) {
     return {
