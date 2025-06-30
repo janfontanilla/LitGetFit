@@ -24,6 +24,7 @@ export class GroqService {
   constructor(config: GroqConfig) {
     this.client = new Groq({
       apiKey: config.apiKey,
+      dangerouslyAllowBrowser: true,
     });
     this.model = config.model || 'mixtral-8x7b-32768';
   }
