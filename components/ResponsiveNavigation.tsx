@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...Platform.select({
       web: {
-        position: 'fixed',
+        position: 'fixed' as any,
       },
       default: {
         position: 'absolute',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...Platform.select({
       web: {
-        position: 'fixed',
+        position: 'fixed' as any,
       },
       default: {
         position: 'absolute',
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     zIndex: 2000,
     ...Platform.select({
       web: {
-        position: 'fixed',
+        position: 'fixed' as any,
       },
       default: {
         position: 'absolute',
