@@ -252,3 +252,13 @@ For support, email support@litgetfit.com or join our Discord community.
 **Built with ❤️ for the fitness community**
 
 Transform your fitness journey with AI-powered coaching, personalized nutrition, and beautiful design.
+
+## What to Expect
+
+- **Instant Access:** No login or signup required. Users can access the app immediately upon visiting the site or opening the app.
+- **Onboarding First:** The onboarding flow is the first thing users see. It collects basic profile information to personalize the experience.
+- **Local Profile Storage:** User profiles are saved directly to local storage/app settings, ensuring privacy and instant usability.
+- **Seamless Home Navigation:** After completing onboarding, users are taken straight to the main dashboard/home page with full app functionality.
+- **Frictionless Experience:** There are no authentication barriers—just onboarding, profile storage, and immediate access to all features.
+
+Enjoy a smooth, user-friendly fitness journey from the very first click!

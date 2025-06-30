@@ -8,11 +8,12 @@ import { CircleCheck as CheckCircle, Sparkles } from 'lucide-react-native';
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
 import { userProfileService, OnboardingData } from '@/lib/supabase';
 
 export default function CompleteScreen() {
-  const { formData, clearFormData } = useOnboardingStore();
+  const { formData, clearFormData } = useOnboardingStoreForm();
+  const { setHasCompletedOnboarding } = useOnboardingStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async () => {
@@ -51,7 +52,7 @@ export default function CompleteScreen() {
         return;
       }
 
-      // Save to Supabase
+      // Save to local storage
       const profile = await userProfileService.createProfile(formData as OnboardingData);
 
       if (!profile) {
@@ -61,8 +62,7 @@ export default function CompleteScreen() {
       }
 
       console.log('User profile saved:', profile);
-      
-      // Clear form data and navigate to main app
+      setHasCompletedOnboarding(true);
       clearFormData();
       router.replace('/(tabs)');
     } catch (error) {
