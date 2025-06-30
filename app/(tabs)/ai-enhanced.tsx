@@ -135,7 +135,7 @@ export default function AIEnhancedScreen() {
 
   // Main function to open AI Form Analysis
   const openAIFormAnalysis = () => {
-    router.push('/(tabs)/ai-coach');
+    router.push('/ai-coach');
   };
 
   const generateMotivationalVideo = async (videoType: 'motivational' | 'workout_tips' | 'progress_celebration') => {
