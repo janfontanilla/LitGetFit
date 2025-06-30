@@ -13,24 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { 
-  Zap, 
-  MessageSquare, 
-  Video, 
-  Dumbbell, 
-  Brain,
-  Sparkles,
-  Play,
-  Bot,
-  X,
-  Loader as Loader2,
-  Star,
-  Camera,
-  CameraIcon,
-  Utensils,
-  Target,
-  Clock
-} from 'lucide-react-native';
+import { Zap, MessageSquare, Video, Dumbbell, Brain, Sparkles, Play, Bot, X, Loader as Loader2, Star, Camera, Camera as CameraIcon, Utensils, Target, Clock } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
