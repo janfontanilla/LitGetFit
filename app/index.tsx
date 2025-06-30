@@ -1,24 +1,27 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import Dashboard from './(tabs)/index';
 import { AppColors } from '@/styles/colors';
 
 export default function Home() {
-  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
-  const router = useRouter();
+  const { 
+    hasCompletedOnboarding, 
+    _hasHydrated,
+    currentOnboardingStep,
+  } = useOnboardingStore() as {
+    hasCompletedOnboarding: boolean;
+    _hasHydrated: boolean;
+    currentOnboardingStep: string;
+  };
 
   useEffect(() => {
     console.log('[INDEX] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding);
-  }, [_hasHydrated, hasCompletedOnboarding]);
+    console.log('[INDEX] Current step:', currentOnboardingStep);
+  }, [_hasHydrated, hasCompletedOnboarding, currentOnboardingStep]);
 
-  useEffect(() => {
-    if (_hasHydrated && !hasCompletedOnboarding) {
-      router.replace('/onboarding');
-    }
-  }, [_hasHydrated, hasCompletedOnboarding, router]);
-
+  // Show loading while hydrating
   if (!_hasHydrated) {
     return (
       <View style={styles.loadingContainer}>
@@ -31,9 +34,34 @@ export default function Home() {
     );
   }
 
+  // Determine which onboarding screen to show
   if (!hasCompletedOnboarding) {
-    // Don't render anything while redirecting
-    return null;
+    if (currentOnboardingStep === 'welcome' || currentOnboardingStep === 'index') {
+      return <Redirect href="/onboarding/name" />;
+    }
+    if (currentOnboardingStep === 'name') {
+      return <Redirect href="/onboarding/name" />;
+    }
+    if (currentOnboardingStep === 'age') {
+      return <Redirect href="/onboarding/age" />;
+    }
+    if (currentOnboardingStep === 'measurements') {
+      return <Redirect href="/onboarding/measurements" />;
+    }
+    if (currentOnboardingStep === 'experience') {
+      return <Redirect href="/onboarding/experience" />;
+    }
+    if (currentOnboardingStep === 'goals') {
+      return <Redirect href="/onboarding/goals" />;
+    }
+    if (currentOnboardingStep === 'activity') {
+      return <Redirect href="/onboarding/activity" />;
+    }
+    if (currentOnboardingStep === 'complete') {
+      return <Redirect href="/onboarding/complete" />;
+    }
+    // Fallback to first onboarding screen
+    return <Redirect href="/onboarding/name" />;
   }
 
   // Show dashboard
