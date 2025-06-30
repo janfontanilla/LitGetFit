@@ -1,8 +1,11 @@
 # Netlify configuration file
 
 [build]
-  # This tells Netlify to publish the 'dist' folder
+  command = "npx expo export --platform web"
   publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
 
 # By not specifying a 'command', we tell Netlify to skip the build step.
 # It will just deploy the contents of the 'publish' directory. 

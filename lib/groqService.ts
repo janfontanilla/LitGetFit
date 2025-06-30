@@ -15,7 +15,7 @@ class GroqService {
   async generateNutritionResponse(request: NutritionChatRequest): Promise<string | null> {
     try {
       // Since we can't use Groq directly in the browser, we'll use our API endpoint
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ class GroqService {
   } | null> {
     try {
       // Use our API endpoint for food analysis
-      const response = await fetch('/api/analyze-food', {
+      const response = await fetch('/.netlify/functions/analyze-food', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
