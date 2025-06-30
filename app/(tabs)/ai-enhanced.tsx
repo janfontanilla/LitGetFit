@@ -25,7 +25,11 @@ import {
   X,
   Loader as Loader2,
   Star,
-  Camera
+  Camera,
+  CameraIcon,
+  Utensils,
+  Target,
+  Clock
 } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
@@ -52,6 +56,7 @@ export default function AIEnhancedScreen() {
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
     loadUserProfile();
@@ -70,6 +75,25 @@ export default function AIEnhancedScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Pulse animation for video coach button
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+
+    return () => pulseAnimation.stop();
   }, []);
 
   const loadUserProfile = async () => {
@@ -363,6 +387,52 @@ export default function AIEnhancedScreen() {
           icon={<Camera size={16} color={AppColors.textPrimary} />}
         />
       </LiquidGlassCard>
+
+      {/* Quick Actions */}
+      <LiquidGlassCard style={styles.quickActionsCard}>
+        <Text style={styles.quickActionsTitle}>Quick AI Actions</Text>
+        <View style={styles.quickActionsGrid}>
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => setActiveFeature('workout')}
+          >
+            <View style={styles.quickActionIcon}>
+              <Dumbbell size={20} color={AppColors.primary} />
+            </View>
+            <Text style={styles.quickActionText}>Generate Workout</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => setActiveFeature('nutrition')}
+          >
+            <View style={styles.quickActionIcon}>
+              <Utensils size={20} color={AppColors.success} />
+            </View>
+            <Text style={styles.quickActionText}>Nutrition Chat</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={openVideoCoachModal}
+          >
+            <View style={styles.quickActionIcon}>
+              <Video size={20} color={AppColors.accent} />
+            </View>
+            <Text style={styles.quickActionText}>Video Coach</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => router.push('/(tabs)/ai-coach')}
+          >
+            <View style={styles.quickActionIcon}>
+              <Camera size={20} color={AppColors.warning} />
+            </View>
+            <Text style={styles.quickActionText}>Form Analysis</Text>
+          </TouchableOpacity>
+        </View>
+      </LiquidGlassCard>
     </View>
   );
 
@@ -387,7 +457,7 @@ export default function AIEnhancedScreen() {
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Fixed Header with AI Video Coach Button */}
+        {/* Fixed Header with Prominent AI Video Coach Button */}
         <Animated.View 
           style={[
             styles.fixedHeader,
@@ -397,6 +467,7 @@ export default function AIEnhancedScreen() {
             },
           ]}
         >
+          {/* Header Title */}
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Zap size={28} color={AppColors.primary} />
@@ -413,38 +484,46 @@ export default function AIEnhancedScreen() {
             )}
           </View>
 
-          {/* Prominent AI Video Coach Button */}
-          <TouchableOpacity
-            style={styles.videoCoachButton}
-            onPress={openVideoCoachModal}
-            activeOpacity={0.8}
-            disabled={isGeneratingVideo}
-          >
-            <LinearGradient
-              colors={['#FF6B6B', '#FF8E53', '#FF6B6B']}
-              style={styles.videoCoachGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+          {/* Prominent AI Video Coach Button - Fixed at Top */}
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <TouchableOpacity
+              style={styles.videoCoachButton}
+              onPress={openVideoCoachModal}
+              activeOpacity={0.8}
+              disabled={isGeneratingVideo}
             >
-              <View style={styles.videoCoachContent}>
-                {isGeneratingVideo ? (
-                  <>
-                    <Loader2 size={24} color={AppColors.textPrimary} />
-                    <Text style={styles.videoCoachText}>Generating Video...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Video size={24} color={AppColors.textPrimary} />
-                    <Text style={styles.videoCoachText}>AI Video Coach</Text>
-                    <Text style={styles.videoCoachSubtext}>Create Personalized Videos</Text>
-                  </>
-                )}
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={['#FF6B6B', '#FF8E53', '#FF6B6B']}
+                style={styles.videoCoachGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.videoCoachContent}>
+                  {isGeneratingVideo ? (
+                    <>
+                      <Loader2 size={24} color={AppColors.textPrimary} />
+                      <View style={styles.videoCoachTextContainer}>
+                        <Text style={styles.videoCoachText}>Generating Video...</Text>
+                        <Text style={styles.videoCoachSubtext}>Creating your personalized content</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Video size={28} color={AppColors.textPrimary} />
+                      <View style={styles.videoCoachTextContainer}>
+                        <Text style={styles.videoCoachText}>AI Video Coach</Text>
+                        <Text style={styles.videoCoachSubtext}>Create Personalized Videos</Text>
+                      </View>
+                      <Play size={20} color="rgba(255, 255, 255, 0.8)" />
+                    </>
+                  )}
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
         </Animated.View>
 
-        {/* Scrollable Content */}
+        {/* Scrollable Content Area */}
         <ScrollView 
           style={styles.scrollableContent}
           contentContainerStyle={styles.scrollContent}
@@ -487,6 +566,11 @@ const styles = StyleSheet.create({
     borderBottomColor: AppColors.border,
     backgroundColor: 'rgba(10, 10, 10, 0.95)',
     zIndex: 1000,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   },
   headerContent: {
     flexDirection: 'row',
@@ -507,6 +591,8 @@ const styles = StyleSheet.create({
   backButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderRadius: 12,
   },
   backButtonText: {
     fontSize: 16,
@@ -514,31 +600,36 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   videoCoachButton: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#FF6B6B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   videoCoachGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   videoCoachContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  videoCoachTextContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   videoCoachText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: AppColors.textPrimary,
+    marginBottom: 2,
   },
   videoCoachSubtext: {
-    fontSize: 12,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
   },
@@ -668,6 +759,40 @@ const styles = StyleSheet.create({
   },
   formAnalysisButton: {
     alignSelf: 'flex-start',
+  },
+  quickActionsCard: {
+    marginBottom: 20,
+  },
+  quickActionsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+    marginBottom: 16,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  quickAction: {
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '40%',
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quickActionText: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
