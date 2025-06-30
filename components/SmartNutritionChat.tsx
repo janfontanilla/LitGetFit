@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Send, Bot, User, Loader2 } from 'lucide-react-native';
+import { Send, Bot, User, Loader as Loader2 } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import openAIService from '@/lib/openaiService';

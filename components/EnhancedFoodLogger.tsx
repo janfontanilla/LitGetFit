@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { Camera, Mic, Send, Sparkles, Loader2 } from 'lucide-react-native';
+import { Camera, Mic, Send, Sparkles, Loader as Loader2 } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
