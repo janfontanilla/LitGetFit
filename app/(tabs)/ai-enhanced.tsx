@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { Zap, MessageSquare, Video, Dumbbell, Brain, Sparkles, Play, Bot, X, Loader as Loader2, Star, Camera, Camera as CameraIcon, Utensils, Target, Clock } from 'lucide-react-native';
+import { Zap, MessageSquare, Video, Dumbbell, Brain, Sparkles, Play, Bot, X, Loader as Loader2, Star, Camera, Utensils, Target } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -353,26 +353,7 @@ export default function AIEnhancedScreen() {
         </View>
       </LiquidGlassCard>
 
-      {/* Form Analysis Integration */}
-      <LiquidGlassCard style={styles.formAnalysisCard}>
-        <View style={styles.formAnalysisHeader}>
-          <Camera size={24} color={AppColors.accent} />
-          <Text style={styles.formAnalysisTitle}>AI Form Analysis</Text>
-        </View>
-        <Text style={styles.formAnalysisDescription}>
-          Get real-time feedback on your workout form with advanced computer vision AI
-        </Text>
-        <GlassButton
-          title="Open Form AI"
-          onPress={openAIFormAnalysis}
-          variant="secondary"
-          size="medium"
-          style={styles.formAnalysisButton}
-          icon={<Camera size={16} color={AppColors.textPrimary} />}
-        />
-      </LiquidGlassCard>
-
-      {/* Quick Actions */}
+      {/* Quick Actions - Removed Form Analysis */}
       <LiquidGlassCard style={styles.quickActionsCard}>
         <Text style={styles.quickActionsTitle}>Quick AI Actions</Text>
         <View style={styles.quickActionsGrid}>
@@ -408,12 +389,12 @@ export default function AIEnhancedScreen() {
           
           <TouchableOpacity 
             style={styles.quickAction}
-            onPress={openAIFormAnalysis}
+            onPress={() => router.push('/(tabs)/routines')}
           >
             <View style={styles.quickActionIcon}>
-              <Camera size={20} color={AppColors.warning} />
+              <Target size={20} color={AppColors.warning} />
             </View>
-            <Text style={styles.quickActionText}>Form Analysis</Text>
+            <Text style={styles.quickActionText}>View Routines</Text>
           </TouchableOpacity>
         </View>
       </LiquidGlassCard>
@@ -707,29 +688,6 @@ const styles = StyleSheet.create({
     color: AppColors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
-  },
-  formAnalysisCard: {
-    marginBottom: 20,
-  },
-  formAnalysisHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  formAnalysisTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-  },
-  formAnalysisDescription: {
-    fontSize: 14,
-    color: AppColors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  formAnalysisButton: {
-    alignSelf: 'flex-start',
   },
   quickActionsCard: {
     marginBottom: 20,
