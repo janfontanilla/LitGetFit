@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
-import { Chrome as Home, RotateCcw, Brain, Utensils, User } from 'lucide-react-native';
+import { Chrome as Home, RotateCcw, Brain, Utensils, User, Zap } from 'lucide-react-native';
 
 export default function TabLayout() {
   const iconSize = 24;
@@ -60,9 +60,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ai-coach"
+        name="ai-enhanced"
         options={{
           title: 'AI Coach',
+          tabBarIcon: ({ color, focused }) => (
+            <Zap 
+              size={iconSize} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ai-coach"
+        options={{
+          title: 'Form AI',
           tabBarIcon: ({ color, focused }) => (
             <Brain 
               size={iconSize} 

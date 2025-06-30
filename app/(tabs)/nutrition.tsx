@@ -4,177 +4,106 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Mic, Camera, Image as ImageIcon, Mic as MicIcon, Utensils } from 'lucide-react-native';
+import { Utensils, MessageSquare, Sparkles } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
-import GlassButton from '@/components/GlassButton';
-import VoiceFoodLogger from '@/components/VoiceFoodLogger';
+import EnhancedFoodLogger from '@/components/EnhancedFoodLogger';
 import FoodLogsList from '@/components/FoodLogsList';
+import SmartNutritionChat from '@/components/SmartNutritionChat';
 import { AppColors, Gradients } from '@/styles/colors';
 
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  type?: 'text' | 'suggestion';
-}
-
-interface QuickReply {
-  id: string;
-  text: string;
-  action: string;
-}
-
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    text: "Hi! I'm your nutrition coach. I'm here to help you track your meals, get personalized recommendations, and answer any nutrition questions you have. Try using the voice logger below to quickly log your meals!",
-    isUser: false,
-    timestamp: new Date(Date.now() - 30000),
-  },
-];
-
-const quickReplies: QuickReply[] = [
-  { id: '1', text: 'Show today\'s macros', action: 'show_macros' },
-  { id: '2', text: 'Meal recommendations', action: 'meal_suggestions' },
-  { id: '3', text: 'Water intake', action: 'water_log' },
-  { id: '4', text: 'Nutrition tips', action: 'nutrition_tips' },
-];
+type NutritionView = 'logging' | 'chat';
 
 export default function NutritionScreen() {
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [activeView, setActiveView] = useState<NutritionView>('logging');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [todaysLogs, setTodaysLogs] = useState<any[]>([]);
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: text.trim(),
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: generateBotResponse(text),
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const generateBotResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('macro') || lowerMessage.includes('nutrition')) {
-      const totalCalories = todaysLogs.reduce((sum, log) => sum + (log.calories || 0), 0);
-      return `Here's your nutrition summary for today:\n\n• Calories: ${totalCalories} / 2,200\n• Protein: 120g / 150g\n• Carbs: 180g / 220g\n• Fats: 65g / 85g\n\nYou're doing well! Try to add more protein to reach your daily goal.`;
-    } else if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
-      return "Based on your goals and current intake, I recommend:\n\n🥗 Grilled chicken salad with quinoa\n🍳 Greek yogurt with berries and nuts\n🐟 Salmon with roasted vegetables\n\nWould you like the recipe for any of these?";
-    } else if (lowerMessage.includes('water')) {
-      return "Staying hydrated is crucial! You've had 6 glasses today - aim for 8-10. Set reminders throughout the day to drink water regularly.";
-    } else if (lowerMessage.includes('tip')) {
-      return "Here are some quick nutrition tips:\n\n• Eat protein with every meal\n• Fill half your plate with vegetables\n• Stay hydrated throughout the day\n• Plan your meals in advance\n• Listen to your hunger cues";
-    } else {
-      return "I understand you're asking about nutrition. I can help you track meals, analyze your macros, suggest healthy recipes, and answer nutrition questions. What specific area would you like to focus on?";
-    }
-  };
-
-  const handleQuickReply = (reply: QuickReply) => {
-    sendMessage(reply.text);
-  };
 
   const handleFoodLogged = (foodLog: any) => {
     setRefreshTrigger(prev => prev + 1);
-    
-    // Add a success message to the chat
-    const successMessage: Message = {
-      id: Date.now().toString(),
-      text: `Great! I've logged "${foodLog.quantity} ${foodLog.food_name}" for ${foodLog.meal_type}. ${foodLog.calories ? `That's approximately ${foodLog.calories} calories.` : ''} Keep up the good tracking!`,
-      isUser: false,
-      timestamp: new Date(),
-    };
-    
-    setMessages(prev => [...prev, successMessage]);
   };
 
   const handleLogsChange = (logs: any[]) => {
     setTodaysLogs(logs);
   };
 
-  const toggleVoiceMode = () => {
-    setIsVoiceMode(!isVoiceMode);
-    console.log('Voice mode toggled:', !isVoiceMode);
+  const getTotalCalories = () => {
+    return todaysLogs.reduce((total, log) => total + (log.calories || 0), 0);
   };
 
-  useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+  const getTotalProtein = () => {
+    return todaysLogs.reduce((total, log) => total + (log.protein || 0), 0);
+  };
 
-  const renderMessage = (message: Message) => (
-    <View
-      key={message.id}
-      style={[
-        styles.messageContainer,
-        message.isUser ? styles.userMessage : styles.botMessage,
-      ]}
+  const renderLoggingView = () => (
+    <ScrollView 
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
     >
-      <View
-        style={[
-          styles.messageBubble,
-          message.isUser ? styles.userBubble : styles.botBubble,
-        ]}
-      >
-        <Text style={[
-          styles.messageText,
-          message.isUser ? styles.userMessageText : styles.botMessageText,
-        ]}>
-          {message.text}
-        </Text>
-        <Text style={[
-          styles.timestamp,
-          message.isUser ? styles.userTimestamp : styles.botTimestamp,
-        ]}>
-          {message.timestamp.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </Text>
+      {/* Daily Summary */}
+      <LiquidGlassCard style={styles.summaryCard}>
+        <View style={styles.summaryHeader}>
+          <Utensils size={24} color={AppColors.primary} />
+          <Text style={styles.summaryTitle}>Today's Nutrition</Text>
+        </View>
+        
+        <View style={styles.summaryStats}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{getTotalCalories()}</Text>
+            <Text style={styles.statLabel}>Calories</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{Math.round(getTotalProtein())}</Text>
+            <Text style={styles.statLabel}>Protein (g)</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{todaysLogs.length}</Text>
+            <Text style={styles.statLabel}>Items Logged</Text>
+          </View>
+        </View>
+
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <Text style={styles.progressLabel}>Daily Goal Progress</Text>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${Math.min((getTotalCalories() / 2200) * 100, 100)}%` }
+              ]} 
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {getTotalCalories()} / 2,200 calories
+          </Text>
+        </View>
+      </LiquidGlassCard>
+
+      {/* Enhanced Food Logger */}
+      <View style={styles.loggerContainer}>
+        <EnhancedFoodLogger 
+          onFoodLogged={handleFoodLogged}
+        />
       </View>
-    </View>
+
+      {/* Food Logs List */}
+      <View style={styles.logsContainer}>
+        <FoodLogsList 
+          refreshTrigger={refreshTrigger}
+          onLogsChange={handleLogsChange}
+        />
+      </View>
+    </ScrollView>
   );
 
-  const renderTypingIndicator = () => (
-    <View style={[styles.messageContainer, styles.botMessage]}>
-      <View style={[styles.messageBubble, styles.botBubble]}>
-        <View style={styles.typingContainer}>
-          <View style={styles.typingDot} />
-          <View style={styles.typingDot} />
-          <View style={styles.typingDot} />
-        </View>
-      </View>
+  const renderChatView = () => (
+    <View style={styles.chatContainer}>
+      <SmartNutritionChat />
     </View>
   );
 
@@ -183,132 +112,51 @@ export default function NutritionScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.coachInfo}>
-            <View style={styles.avatar}>
-              <Utensils size={20} color={AppColors.primary} />
-            </View>
-            <View style={styles.coachDetails}>
-              <Text style={styles.coachName}>Nutrition Coach</Text>
-              <Text style={styles.coachStatus}>Online • Ready to help</Text>
-            </View>
+          <View style={styles.headerContent}>
+            <Sparkles size={28} color={AppColors.primary} />
+            <Text style={styles.title}>Smart Nutrition</Text>
           </View>
           
-          {/* Voice Mode Button */}
-          <TouchableOpacity
-            style={[
-              styles.voiceModeButton,
-              isVoiceMode && styles.voiceModeButtonActive,
-            ]}
-            onPress={toggleVoiceMode}
-          >
-            <MicIcon 
-              size={20} 
-              color={isVoiceMode ? AppColors.textPrimary : AppColors.textSecondary} 
-            />
-            <Text style={[
-              styles.voiceModeText,
-              isVoiceMode && styles.voiceModeTextActive,
-            ]}>
-              Voice
-            </Text>
-          </TouchableOpacity>
+          {/* View Toggle */}
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                activeView === 'logging' && styles.activeToggleButton,
+              ]}
+              onPress={() => setActiveView('logging')}
+            >
+              <Utensils size={16} color={activeView === 'logging' ? AppColors.textPrimary : AppColors.textSecondary} />
+              <Text style={[
+                styles.toggleText,
+                activeView === 'logging' && styles.activeToggleText,
+              ]}>
+                Logging
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                activeView === 'chat' && styles.activeToggleButton,
+              ]}
+              onPress={() => setActiveView('chat')}
+            >
+              <MessageSquare size={16} color={activeView === 'chat' ? AppColors.textPrimary : AppColors.textSecondary} />
+              <Text style={[
+                styles.toggleText,
+                activeView === 'chat' && styles.activeToggleText,
+              ]}>
+                AI Chat
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <KeyboardAvoidingView 
-          style={styles.keyboardContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Voice Food Logger */}
-          <View style={styles.voiceLoggerContainer}>
-            <VoiceFoodLogger 
-              onFoodLogged={handleFoodLogged}
-              style={styles.voiceLogger}
-            />
-          </View>
-
-          {/* Food Logs List */}
-          <View style={styles.foodLogsContainer}>
-            <FoodLogsList 
-              refreshTrigger={refreshTrigger}
-              onLogsChange={handleLogsChange}
-            />
-          </View>
-
-          {/* Compact Chat Section */}
-          <View style={styles.chatSection}>
-            <Text style={styles.chatTitle}>Quick Nutrition Help</Text>
-            
-            {/* Messages */}
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.messagesContainer}
-              contentContainerStyle={styles.messagesContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {messages.slice(-2).map(renderMessage)} {/* Only show last 2 messages */}
-              {isTyping && renderTypingIndicator()}
-            </ScrollView>
-
-            {/* Quick Replies */}
-            {!isTyping && (
-              <ScrollView
-                horizontal
-                style={styles.quickRepliesContainer}
-                contentContainerStyle={styles.quickRepliesContent}
-                showsHorizontalScrollIndicator={false}
-              >
-                {quickReplies.map((reply) => (
-                  <TouchableOpacity
-                    key={reply.id}
-                    style={styles.quickReplyButton}
-                    onPress={() => handleQuickReply(reply)}
-                  >
-                    <Text style={styles.quickReplyText}>{reply.text}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {/* Input Area */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputCard}>
-                <View style={styles.inputRow}>
-                  <TouchableOpacity style={styles.attachButton}>
-                    <Camera size={18} color={AppColors.textSecondary} />
-                  </TouchableOpacity>
-                  
-                  <TextInput
-                    style={styles.textInput}
-                    value={inputText}
-                    onChangeText={setInputText}
-                    placeholder="Ask about nutrition, get meal tips..."
-                    placeholderTextColor={AppColors.textSecondary}
-                    multiline
-                    maxLength={500}
-                  />
-                  
-                  <TouchableOpacity style={styles.voiceButton}>
-                    <Mic size={18} color={AppColors.textSecondary} />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[
-                      styles.sendButton,
-                      inputText.trim() && styles.sendButtonActive,
-                    ]}
-                    onPress={() => sendMessage(inputText)}
-                    disabled={!inputText.trim()}
-                  >
-                    <Send 
-                      size={18} 
-                      color={inputText.trim() ? AppColors.primary : AppColors.textSecondary} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
+        {/* Content */}
+        <View style={styles.content}>
+          {activeView === 'logging' ? renderLoggingView() : renderChatView()}
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -321,213 +169,130 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  keyboardContainer: {
-    flex: 1,
-  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: AppColors.border,
   },
-  coachInfo: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: 12,
+    marginBottom: 16,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  coachDetails: {
-    flex: 1,
-  },
-  coachName: {
-    fontSize: 16,
-    fontWeight: '600',
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
     color: AppColors.textPrimary,
   },
-  coachStatus: {
-    fontSize: 12,
-    color: AppColors.success,
-    marginTop: 2,
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: AppColors.backgroundSecondary,
+    borderRadius: 12,
+    padding: 4,
   },
-  voiceModeButton: {
+  toggleButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    justifyContent: 'center',
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 12,
+    borderRadius: 8,
     gap: 6,
   },
-  voiceModeButtonActive: {
+  activeToggleButton: {
     backgroundColor: AppColors.primary,
   },
-  voiceModeText: {
-    fontSize: 12,
+  toggleText: {
+    fontSize: 14,
     fontWeight: '600',
     color: AppColors.textSecondary,
   },
-  voiceModeTextActive: {
+  activeToggleText: {
     color: AppColors.textPrimary,
   },
-  voiceLoggerContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  voiceLogger: {
-    marginBottom: 0,
-  },
-  foodLogsContainer: {
+  content: {
     flex: 1,
-    paddingHorizontal: 20,
-    maxHeight: 300,
   },
-  chatSection: {
-    backgroundColor: AppColors.backgroundSecondary,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 16,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingBottom: 130,
-    marginTop: 16,
   },
-  chatTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-    paddingHorizontal: 20,
-    marginBottom: 12,
+  summaryCard: {
+    margin: 20,
+    marginBottom: 16,
   },
-  messagesContainer: {
-    maxHeight: 120,
-    paddingHorizontal: 20,
-  },
-  messagesContent: {
-    paddingVertical: 8,
-  },
-  messageContainer: {
-    marginBottom: 8,
-  },
-  userMessage: {
-    alignItems: 'flex-end',
-  },
-  botMessage: {
-    alignItems: 'flex-start',
-  },
-  messageBubble: {
-    maxWidth: '85%',
-    minWidth: 60,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  userBubble: {
-    backgroundColor: AppColors.primary,
-  },
-  botBubble: {
-    backgroundColor: AppColors.backgroundTertiary,
-  },
-  messageText: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 2,
-  },
-  userMessageText: {
-    color: AppColors.textPrimary,
-  },
-  botMessageText: {
-    color: AppColors.textPrimary,
-  },
-  timestamp: {
-    fontSize: 9,
-    opacity: 0.7,
-  },
-  userTimestamp: {
-    color: AppColors.textSecondary,
-    textAlign: 'right',
-  },
-  botTimestamp: {
-    color: AppColors.textSecondary,
-  },
-  typingContainer: {
+  summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
+    marginBottom: 20,
+    gap: 12,
   },
-  typingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: AppColors.textSecondary,
-    marginHorizontal: 1,
-    opacity: 0.6,
-  },
-  quickRepliesContainer: {
-    maxHeight: 40,
-    marginVertical: 12,
-  },
-  quickRepliesContent: {
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  quickReplyButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: AppColors.backgroundTertiary,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  quickReplyText: {
-    fontSize: 11,
-    color: AppColors.textSecondary,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    paddingHorizontal: 20,
-  },
-  inputCard: {
-    backgroundColor: AppColors.backgroundTertiary,
-    borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: AppColors.border,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  attachButton: {
-    padding: 6,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 14,
+  summaryTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     color: AppColors.textPrimary,
-    maxHeight: 80,
-    paddingVertical: 6,
-    paddingHorizontal: 0,
   },
-  voiceButton: {
-    padding: 6,
+  summaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
   },
-  sendButton: {
-    padding: 6,
+  statItem: {
+    alignItems: 'center',
   },
-  sendButtonActive: {
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
-    borderRadius: 12,
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: AppColors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+    fontWeight: '600',
+  },
+  progressContainer: {
+    marginTop: 16,
+  },
+  progressLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: AppColors.backgroundSecondary,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: AppColors.success,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+  },
+  loggerContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  logsContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  chatContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
 });
