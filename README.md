@@ -23,12 +23,6 @@ A cutting-edge AI-powered fitness companion built with React Native and Expo. Ge
 - **Exercise Library**: Extensive database with proper form instructions
 - **Progress Tracking**: Monitor your fitness journey with detailed analytics
 
-### 🎨 Beautiful Design
-- **Liquid Glass UI**: Stunning glassmorphism design with smooth animations
-- **Dark Theme**: Eye-friendly interface perfect for any lighting
-- **Responsive Layout**: Optimized for all screen sizes and orientations
-- **Micro-interactions**: Delightful animations and haptic feedback
-
 ## 🚀 Tech Stack
 
 - **Frontend**: React Native with Expo SDK 52
