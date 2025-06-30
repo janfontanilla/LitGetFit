@@ -21,6 +21,7 @@ import WorkoutOverlay from '@/components/WorkoutOverlay';
 import { AppColors, Gradients } from '@/styles/colors';
 import { workoutService, Workout } from '@/lib/supabase';
 import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
+import { foodLogService } from '@/lib/foodLogService';
 
 interface TodaysWorkout {
   id: string;
@@ -35,6 +36,7 @@ interface TodaysWorkout {
 export default function HomeScreen() {
   const [todaysWorkout, setTodaysWorkout] = useState<TodaysWorkout | null>(null);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
+  const [todaysCalories, setTodaysCalories] = useState(0);
   const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('Champion'); // Placeholder
@@ -57,6 +59,10 @@ export default function HomeScreen() {
       // Load weekly stats
       const stats = await workoutProgressService.getWeeklyStats();
       setWeeklyStats(stats);
+
+      const foodLogs = await foodLogService.getTodaysFoodLogs();
+      const totalCalories = foodLogs.reduce((sum, log) => sum + (log.calories || 0), 0);
+      setTodaysCalories(totalCalories);
 
       // Load today's workout or suggest one
       await loadTodaysWorkout();
@@ -251,7 +257,7 @@ export default function HomeScreen() {
               </LiquidGlassCard>
               <LiquidGlassCard style={styles.statCard}>
                 <Flame size={24} color={AppColors.primary} />
-                <Text style={styles.statValue}>{(weeklyStats?.totalDuration || 0) * 8}</Text> 
+                <Text style={styles.statValue}>{todaysCalories}</Text>
                 <Text style={styles.statLabel}>Calories</Text>
               </LiquidGlassCard>
               <LiquidGlassCard style={styles.statCard}>

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { router, usePathname } from 'expo-router';
-import { Menu, X, Chrome as Home, Dumbbell, Utensils, User, Zap, Calendar, TrendingUp, Settings } from 'lucide-react-native';
+import { Menu, X, Home, Dumbbell, Utensils, User, Zap, Calendar, TrendingUp, Settings, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 
 const { width } = Dimensions.get('window');
@@ -72,8 +72,15 @@ const secondaryItems: NavigationItem[] = [
 export default function ResponsiveNavigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(width < 768);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const slideAnim = new Animated.Value(-300);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      window.postMessage({ type: 'nav-collapse', isCollapsed }, '*');
+    }
+  }, [isCollapsed]);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -142,39 +149,53 @@ export default function ResponsiveNavigation() {
               </View>
             )}
           </View>
-          <Text style={[
-            styles.navItemText,
-            isActive && styles.navItemTextActive,
-            isSecondary && styles.secondaryNavItemText,
-          ]}>
-            {item.title}
-          </Text>
+          {!isCollapsed && (
+            <Text style={[
+              styles.navItemText,
+              isActive && styles.navItemTextActive,
+              isSecondary && styles.secondaryNavItemText,
+            ]}>
+              {item.title}
+            </Text>
+          )}
         </View>
       </TouchableOpacity>
     );
   };
 
-  // Desktop Navigation
   if (!isMobile) {
+    const desktopContainerStyle = [
+      styles.desktopContainer,
+      isCollapsed ? styles.desktopContainerCollapsed : styles.desktopContainerExpanded,
+    ];
+
     return (
-      <View style={styles.desktopContainer}>
+      <View style={desktopContainerStyle}>
         <BlurView intensity={20} tint="dark" style={styles.desktopNav}>
           <View style={styles.desktopContent}>
-            {/* Logo/Brand */}
-            <View style={styles.brand}>
+            <View style={[styles.brand, isCollapsed && styles.brandCollapsed]}>
               <Zap size={28} color={AppColors.primary} />
-              <Text style={styles.brandText}>Lit Get Fit</Text>
+              {!isCollapsed && <Text style={styles.brandText}>LitGetFit</Text>}
             </View>
 
-            {/* Main Navigation */}
             <View style={styles.desktopNavItems}>
               {navigationItems.map(item => renderNavigationItem(item))}
             </View>
 
-            {/* Secondary Actions */}
             <View style={styles.desktopSecondary}>
               {secondaryItems.map(item => renderNavigationItem(item, true))}
             </View>
+
+            <TouchableOpacity
+              style={[styles.collapseButton, isCollapsed && styles.collapseButtonCollapsed]}
+              onPress={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? (
+                <ChevronRight size={20} color={AppColors.textSecondary} />
+              ) : (
+                <ChevronLeft size={20} color={AppColors.textSecondary} />
+              )}
+            </TouchableOpacity>
           </View>
         </BlurView>
       </View>
@@ -276,7 +297,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     bottom: 0,
-    width: 280,
     zIndex: 1000,
     ...Platform.select({
       web: {
@@ -287,9 +307,15 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  desktopContainerExpanded: {
+    width: 260,
+  },
+  desktopContainerCollapsed: {
+    width: 90,
+  },
   desktopNav: {
     flex: 1,
-    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+    backgroundColor: 'rgba(12, 12, 12, 0.9)',
     borderRightWidth: 1,
     borderRightColor: AppColors.border,
   },
@@ -303,6 +329,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 32,
     gap: 12,
+  },
+  brandCollapsed: {
+    paddingHorizontal: 0,
+    justifyContent: 'center',
   },
   brandText: {
     fontSize: 20,
@@ -318,6 +348,19 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: AppColors.border,
+  },
+  collapseButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+  },
+  collapseButtonCollapsed: {
+    right: 'auto',
+    left: '50%',
+    transform: [{ translateX: -18 }],
   },
 
   // Mobile Styles
