@@ -1,4 +1,5 @@
 # 🏋️ Lit Get Fit - AI Fitness Coach
+Test out my app! https://litnessgetfitness.netlify.app/onboarding
 
 A cutting-edge AI-powered fitness companion built with React Native and Expo. Get personalized workouts, real-time form analysis, and intelligent nutrition coaching all in one beautiful app.
 
