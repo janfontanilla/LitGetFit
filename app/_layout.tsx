@@ -5,31 +5,35 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AppColors } from '@/styles/colors';
 import { StatusBar } from 'expo-status-bar';
+import { supabase } from '@/lib/supabase';
 
 const InitialLayout = () => {
   const { session, isLoading } = useSession();
   const segments = useSegments();
   const router = useRouter();
 
+  // Handle OAuth callback
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      supabase.auth.exchangeCodeForSession(window.location.hash).then(({ data, error }) => {
+        if (data?.session) {
+          window.history.replaceState({}, document.title, '/');
+          router.replace('/(tabs)');
+        }
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (isLoading) {
       return;
     }
-
     const inAuthGroup = (segments[0] as any) === '(auth)';
-
     if (session && !inAuthGroup) {
-      // User is authenticated and not in the auth flow,
-      // so we can redirect to the main app.
       router.replace('/(tabs)');
     } else if (!session && !inAuthGroup) {
-      // User is not authenticated and not in the auth flow,
-      // so redirect to the login page.
       router.replace('/(auth)/login' as any);
     }
-    // If the user is in the auth group, we don't need to do anything,
-    // as they are already where they should be (login/signup page).
-
   }, [session, isLoading, segments, router]);
 
   if (isLoading) {
