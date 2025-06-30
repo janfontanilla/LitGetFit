@@ -10,14 +10,29 @@ import {
   Alert,
   TextInput,
   ScrollView,
-  PanResponder,
+  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, Play, Pause, Square, Clock, Dumbbell, Heart, ChevronLeft, ChevronRight, SkipForward, CreditCard as Edit3, MessageSquare, BookOpen, Zap, Target, Flame, CircleCheck as CheckCircle, RotateCcw, Settings, Camera, Mic } from 'lucide-react-native';
+import { 
+  X, 
+  Play, 
+  Pause, 
+  Square, 
+  Clock, 
+  Dumbbell, 
+  Heart, 
+  CheckCircle, 
+  Home,
+  Target,
+  Flame,
+  Info,
+  Edit
+} from 'lucide-react-native';
 
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
-import { AppColors, Gradients } from '@/styles/colors';
+import { AppColors } from '@/styles/colors';
+import { router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,63 +87,18 @@ export default function WorkoutTrackingOverlay({
 }: WorkoutTrackingOverlayProps) {
   // Core state
   const [workoutState, setWorkoutState] = useState<WorkoutState>('ready');
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [currentSet, setCurrentSet] = useState(1);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [restTimer, setRestTimer] = useState(0);
   const [caloriesBurned, setCaloriesBurned] = useState(0);
   const [heartRate, setHeartRate] = useState(0);
   
   // Exercise tracking
   const [completedSets, setCompletedSets] = useState<{ [key: string]: boolean[] }>({});
   const [exerciseData, setExerciseData] = useState<{ [key: string]: { reps: string; weight: string; notes: string } }>({});
-  
-  // UI state
-  const [showQuickMenu, setShowQuickMenu] = useState(false);
-  const [showFormGuide, setShowFormGuide] = useState(false);
-  const [showExerciseNotes, setShowExerciseNotes] = useState(false);
-  const [isAIAnalyzing, setIsAIAnalyzing] = useState(false);
-  const [aiFormFeedback, setAIFormFeedback] = useState('');
+  const [showExerciseDetails, setShowExerciseDetails] = useState<string | null>(null);
   
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(width)).current;
-
-  // Pan responder for swipe gestures
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 50;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dx > 0) {
-          // Swiping right - previous exercise
-          slideAnim.setValue(-gestureState.dx);
-        } else {
-          // Swiping left - next exercise
-          slideAnim.setValue(-gestureState.dx);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (Math.abs(gestureState.dx) > 100) {
-          if (gestureState.dx > 0 && currentExerciseIndex > 0) {
-            // Previous exercise
-            navigateToExercise(currentExerciseIndex - 1);
-          } else if (gestureState.dx < 0 && currentExerciseIndex < workout.exercises.length - 1) {
-            // Next exercise
-            navigateToExercise(currentExerciseIndex + 1);
-          }
-        }
-        
-        // Reset animation
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
 
   useEffect(() => {
     if (visible) {
@@ -157,26 +127,6 @@ export default function WorkoutTrackingOverlay({
     return () => clearInterval(interval);
   }, [workoutState]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (workoutState === 'resting' && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer(prev => {
-          if (prev <= 1) {
-            setWorkoutState('active');
-            // Trigger haptic feedback (web-compatible)
-            console.log('Rest complete - haptic feedback');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [workoutState, restTimer]);
-
   const initializeWorkout = () => {
     const sets: { [key: string]: boolean[] } = {};
     const data: { [key: string]: { reps: string; weight: string; notes: string } } = {};
@@ -192,10 +142,7 @@ export default function WorkoutTrackingOverlay({
     
     setCompletedSets(sets);
     setExerciseData(data);
-    setCurrentExerciseIndex(0);
-    setCurrentSet(1);
     setElapsedTime(0);
-    setRestTimer(0);
     setCaloriesBurned(0);
     setWorkoutState('ready');
   };
@@ -213,13 +160,6 @@ export default function WorkoutTrackingOverlay({
 
   const startWorkout = () => {
     setWorkoutState('active');
-    setIsAIAnalyzing(true);
-    
-    // Simulate AI form analysis
-    setTimeout(() => {
-      setAIFormFeedback('Great form! Keep your core engaged and maintain controlled movements.');
-      setIsAIAnalyzing(false);
-    }, 2000);
   };
 
   const pauseWorkout = () => {
@@ -281,63 +221,20 @@ export default function WorkoutTrackingOverlay({
     }, 1500);
   };
 
-  const recordSet = () => {
-    const exerciseKey = currentExerciseIndex.toString();
-    const newCompletedSets = { ...completedSets };
+  const toggleSetCompletion = (exerciseIndex: number, setIndex: number) => {
+    if (workoutState !== 'active') return;
     
-    // Mark current set as completed
-    newCompletedSets[exerciseKey][currentSet - 1] = true;
+    const newCompletedSets = { ...completedSets };
+    newCompletedSets[exerciseIndex.toString()][setIndex] = !newCompletedSets[exerciseIndex.toString()][setIndex];
     setCompletedSets(newCompletedSets);
 
-    const exercise = workout.exercises[currentExerciseIndex];
-    const totalSetsForExercise = parseInt(exercise.sets);
-
-    if (currentSet < totalSetsForExercise) {
-      // Move to next set and start rest timer
-      setCurrentSet(currentSet + 1);
-      const restTime = parseInt(exercise.restTime) || 60;
-      setRestTimer(restTime);
-      setWorkoutState('resting');
+    // Trigger haptic feedback
+    if (Platform.OS !== 'web') {
+      // Would use Haptics.impactAsync here on native platforms
     } else {
-      // Exercise completed, move to next exercise
-      if (currentExerciseIndex < workout.exercises.length - 1) {
-        navigateToExercise(currentExerciseIndex + 1);
-      } else {
-        // Workout completed
-        completeWorkout();
-      }
+      // Visual feedback for web
+      console.log('Set completion toggled - visual feedback');
     }
-  };
-
-  const navigateToExercise = (index: number) => {
-    if (index >= 0 && index < workout.exercises.length) {
-      setCurrentExerciseIndex(index);
-      setCurrentSet(1);
-      setRestTimer(0);
-      if (workoutState === 'resting') {
-        setWorkoutState('active');
-      }
-    }
-  };
-
-  const skipExercise = () => {
-    Alert.alert(
-      'Skip Exercise',
-      `Skip ${workout.exercises[currentExerciseIndex].name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Skip',
-          onPress: () => {
-            if (currentExerciseIndex < workout.exercises.length - 1) {
-              navigateToExercise(currentExerciseIndex + 1);
-            } else {
-              completeWorkout();
-            }
-          },
-        },
-      ]
-    );
   };
 
   const getTotalSets = () => {
@@ -359,15 +256,26 @@ export default function WorkoutTrackingOverlay({
     }).length;
   };
 
-  const getProgressPercentage = () => {
+  const getExerciseProgress = (exerciseIndex: number) => {
+    const sets = completedSets[exerciseIndex.toString()] || [];
+    const completedSetsCount = sets.filter(Boolean).length;
+    const totalSets = parseInt(workout.exercises[exerciseIndex].sets) || 0;
+    return totalSets > 0 ? (completedSetsCount / totalSets) * 100 : 0;
+  };
+
+  const getOverallProgress = () => {
     const totalSets = getTotalSets();
     const completedSetsCount = getCompletedSetsCount();
     return totalSets > 0 ? (completedSetsCount / totalSets) * 100 : 0;
   };
 
-  const currentExercise = workout.exercises[currentExerciseIndex];
-  const currentExerciseData = exerciseData[currentExerciseIndex.toString()] || { reps: '', weight: '', notes: '' };
-  const nextExercise = currentExerciseIndex < workout.exercises.length - 1 ? workout.exercises[currentExerciseIndex + 1] : null;
+  const exitToHome = () => {
+    router.replace('/(tabs)');
+  };
+
+  const toggleExerciseDetails = (exerciseIndex: string | null) => {
+    setShowExerciseDetails(exerciseIndex);
+  };
 
   if (!visible) return null;
 
@@ -385,9 +293,13 @@ export default function WorkoutTrackingOverlay({
             <View style={styles.topBarContent}>
               <Text style={styles.workoutName}>{workout.name}</Text>
               <Text style={styles.timer}>{formatTime(elapsedTime)}</Text>
-              <TouchableOpacity style={styles.stopButton} onPress={stopWorkout}>
-                <Square size={20} color={AppColors.accent} />
-                <Text style={styles.stopButtonText}>Stop</Text>
+              <TouchableOpacity 
+                style={styles.stopButton} 
+                onPress={exitToHome}
+                accessibilityLabel="Exit workout"
+              >
+                <Home size={20} color={AppColors.accent} />
+                <Text style={styles.stopButtonText}>Exit</Text>
               </TouchableOpacity>
             </View>
             
@@ -397,221 +309,220 @@ export default function WorkoutTrackingOverlay({
                 <View 
                   style={[
                     styles.progressFill,
-                    { width: `${getProgressPercentage()}%` }
+                    { width: `${getOverallProgress()}%` }
                   ]} 
                 />
               </View>
               <Text style={styles.progressText}>
-                {Math.round(getProgressPercentage())}% Complete
+                {Math.round(getOverallProgress())}% Complete
               </Text>
             </View>
           </View>
 
           {/* Main Content */}
-          <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
-            {/* Current Exercise Panel */}
-            <Animated.View 
-              style={[styles.currentExercisePanel, { transform: [{ translateX: slideAnim }] }]}
-              {...panResponder.panHandlers}
-            >
-              <LiquidGlassCard style={styles.exerciseCard}>
-                {/* Exercise Header */}
-                <View style={styles.exerciseHeader}>
-                  <View style={styles.exerciseNavigation}>
-                    <TouchableOpacity
-                      style={[styles.navButton, currentExerciseIndex === 0 && styles.navButtonDisabled]}
-                      onPress={() => navigateToExercise(currentExerciseIndex - 1)}
-                      disabled={currentExerciseIndex === 0}
-                    >
-                      <ChevronLeft size={20} color={currentExerciseIndex === 0 ? AppColors.textTertiary : AppColors.textPrimary} />
-                    </TouchableOpacity>
-                    
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseNumber}>
-                        Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
-                      </Text>
-                      <Text style={styles.exerciseName}>{currentExercise.name}</Text>
-                      <Text style={styles.setCounter}>
-                        Set {currentSet}/{currentExercise.sets} - Target: {currentExercise.reps} reps
-                      </Text>
-                    </View>
-                    
-                    <TouchableOpacity
-                      style={[styles.navButton, currentExerciseIndex === workout.exercises.length - 1 && styles.navButtonDisabled]}
-                      onPress={() => navigateToExercise(currentExerciseIndex + 1)}
-                      disabled={currentExerciseIndex === workout.exercises.length - 1}
-                    >
-                      <ChevronRight size={20} color={currentExerciseIndex === workout.exercises.length - 1 ? AppColors.textTertiary : AppColors.textPrimary} />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Muscle Group Indicator */}
-                  {currentExercise.targetMuscles && (
-                    <View style={styles.muscleIndicator}>
-                      <Target size={16} color={AppColors.primary} />
-                      <Text style={styles.muscleText}>
-                        {currentExercise.targetMuscles.join(', ')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* AI Form Feedback */}
-                <View style={styles.aiFeedbackContainer}>
-                  <View style={styles.aiFeedbackHeader}>
-                    <Camera size={16} color={AppColors.primary} />
-                    <Text style={styles.aiFeedbackTitle}>AI Form Analysis</Text>
-                    {isAIAnalyzing && (
-                      <View style={styles.analyzingIndicator}>
-                        <Text style={styles.analyzingText}>Analyzing...</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.aiFeedbackText}>
-                    {aiFormFeedback || 'Start your set to receive real-time form feedback'}
-                  </Text>
-                </View>
-
-                {/* Input Fields */}
-                <View style={styles.inputSection}>
-                  <View style={styles.inputRow}>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Reps Completed</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={currentExerciseData.reps}
-                        onChangeText={(value) => {
-                          const newData = { ...exerciseData };
-                          newData[currentExerciseIndex.toString()] = {
-                            ...newData[currentExerciseIndex.toString()],
-                            reps: value,
-                          };
-                          setExerciseData(newData);
-                        }}
-                        keyboardType="numeric"
-                        placeholder={currentExercise.reps}
-                        placeholderTextColor={AppColors.textTertiary}
-                      />
-                    </View>
-                    
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Weight Used</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={currentExerciseData.weight}
-                        onChangeText={(value) => {
-                          const newData = { ...exerciseData };
-                          newData[currentExerciseIndex.toString()] = {
-                            ...newData[currentExerciseIndex.toString()],
-                            weight: value,
-                          };
-                          setExerciseData(newData);
-                        }}
-                        placeholder={currentExercise.weight}
-                        placeholderTextColor={AppColors.textTertiary}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Notes (Optional)</Text>
-                    <TextInput
-                      style={[styles.input, styles.notesInput]}
-                      value={currentExerciseData.notes}
-                      onChangeText={(value) => {
-                        const newData = { ...exerciseData };
-                        newData[currentExerciseIndex.toString()] = {
-                          ...newData[currentExerciseIndex.toString()],
-                          notes: value,
-                        };
-                        setExerciseData(newData);
-                      }}
-                      placeholder="How did this set feel?"
-                      placeholderTextColor={AppColors.textTertiary}
-                      multiline
-                    />
-                  </View>
-                </View>
-
-                {/* Record Set Button */}
+          <ScrollView 
+            style={styles.mainContent} 
+            contentContainerStyle={styles.mainContentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Workout State Controls */}
+            <View style={styles.workoutControls}>
+              {workoutState === 'ready' && (
                 <GlassButton
-                  title="Record Set"
-                  onPress={recordSet}
+                  title="Start Workout"
+                  onPress={startWorkout}
                   variant="primary"
                   size="large"
-                  style={styles.recordButton}
-                  disabled={workoutState !== 'active'}
-                  icon={<CheckCircle size={20} color={AppColors.textPrimary} />}
+                  style={styles.controlButton}
+                  icon={<Play size={20} color={AppColors.textPrimary} />}
                 />
-
-                {/* Quick Access Menu */}
-                <View style={styles.quickAccessMenu}>
-                  <TouchableOpacity 
-                    style={styles.quickAccessButton}
-                    onPress={() => setShowFormGuide(true)}
-                  >
-                    <BookOpen size={16} color={AppColors.textSecondary} />
-                    <Text style={styles.quickAccessText}>Form Guide</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.quickAccessButton}
-                    onPress={skipExercise}
-                  >
-                    <SkipForward size={16} color={AppColors.textSecondary} />
-                    <Text style={styles.quickAccessText}>Skip</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.quickAccessButton}
-                    onPress={() => setShowExerciseNotes(true)}
-                  >
-                    <Edit3 size={16} color={AppColors.textSecondary} />
-                    <Text style={styles.quickAccessText}>Modify</Text>
-                  </TouchableOpacity>
-                </View>
-              </LiquidGlassCard>
-            </Animated.View>
-
-            {/* Next Exercise Preview */}
-            {nextExercise && workoutState !== 'completed' && (
-              <LiquidGlassCard style={styles.nextExercisePanel}>
-                <View style={styles.nextExerciseHeader}>
-                  <Text style={styles.nextExerciseTitle}>Next Exercise</Text>
-                  <TouchableOpacity
-                    style={styles.continueButton}
-                    onPress={() => navigateToExercise(currentExerciseIndex + 1)}
-                  >
-                    <Text style={styles.continueButtonText}>Continue</Text>
-                    <ChevronRight size={16} color={AppColors.primary} />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.nextExerciseName}>{nextExercise.name}</Text>
-                <Text style={styles.nextExerciseDetails}>
-                  {nextExercise.sets} sets × {nextExercise.reps} reps
-                </Text>
-              </LiquidGlassCard>
-            )}
-
-            {/* Rest Timer */}
-            {workoutState === 'resting' && (
-              <LiquidGlassCard style={styles.restTimerPanel}>
-                <Text style={styles.restTitle}>Rest Time</Text>
-                <Animated.Text style={[styles.restTimer, { transform: [{ scale: pulseAnim }] }]}>
-                  {formatTime(restTimer)}
-                </Animated.Text>
-                <Text style={styles.restSubtitle}>Get ready for your next set</Text>
+              )}
+              
+              {workoutState === 'active' && (
                 <GlassButton
-                  title="Skip Rest"
-                  onPress={() => {
-                    setRestTimer(0);
-                    setWorkoutState('active');
-                  }}
+                  title="Pause Workout"
+                  onPress={pauseWorkout}
                   variant="secondary"
-                  size="small"
-                  style={styles.skipRestButton}
+                  size="large"
+                  style={styles.controlButton}
+                  icon={<Pause size={20} color={AppColors.textPrimary} />}
                 />
-              </LiquidGlassCard>
+              )}
+              
+              {workoutState === 'paused' && (
+                <GlassButton
+                  title="Resume Workout"
+                  onPress={resumeWorkout}
+                  variant="primary"
+                  size="large"
+                  style={styles.controlButton}
+                  icon={<Play size={20} color={AppColors.textPrimary} />}
+                />
+              )}
+            </View>
+
+            {/* All Exercises List */}
+            <View style={styles.exercisesList}>
+              <Text style={styles.exercisesListTitle}>Exercises</Text>
+              
+              {workout.exercises.map((exercise, exerciseIndex) => (
+                <LiquidGlassCard 
+                  key={exerciseIndex} 
+                  style={[
+                    styles.exerciseCard,
+                    showExerciseDetails === exerciseIndex.toString() && styles.exerciseCardExpanded
+                  ]}
+                >
+                  {/* Exercise Header */}
+                  <TouchableOpacity
+                    style={styles.exerciseHeader}
+                    onPress={() => toggleExerciseDetails(
+                      showExerciseDetails === exerciseIndex.toString() ? null : exerciseIndex.toString()
+                    )}
+                  >
+                    <View style={styles.exerciseHeaderLeft}>
+                      <Text style={styles.exerciseNumber}>{exerciseIndex + 1}</Text>
+                      <View style={styles.exerciseInfo}>
+                        <Text style={styles.exerciseName}>{exercise.name}</Text>
+                        <Text style={styles.exerciseDetails}>
+                          {exercise.sets} sets × {exercise.reps} reps • {exercise.weight}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.exerciseProgress}>
+                      <View style={styles.exerciseProgressBar}>
+                        <View 
+                          style={[
+                            styles.exerciseProgressFill,
+                            { width: `${getExerciseProgress(exerciseIndex)}%` }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.exerciseProgressText}>
+                        {Math.round(getExerciseProgress(exerciseIndex))}%
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Exercise Details (expanded view) */}
+                  {showExerciseDetails === exerciseIndex.toString() && (
+                    <View style={styles.exerciseDetails}>
+                      {/* Instructions */}
+                      {exercise.instructions && (
+                        <View style={styles.instructionsContainer}>
+                          <View style={styles.instructionsHeader}>
+                            <Info size={16} color={AppColors.primary} />
+                            <Text style={styles.instructionsTitle}>Instructions</Text>
+                          </View>
+                          <Text style={styles.instructionsText}>{exercise.instructions}</Text>
+                        </View>
+                      )}
+                      
+                      {/* Input Fields */}
+                      <View style={styles.inputSection}>
+                        <View style={styles.inputRow}>
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Reps</Text>
+                            <TextInput
+                              style={styles.input}
+                              value={exerciseData[exerciseIndex.toString()]?.reps}
+                              onChangeText={(value) => {
+                                const newData = { ...exerciseData };
+                                if (!newData[exerciseIndex.toString()]) {
+                                  newData[exerciseIndex.toString()] = { reps: '', weight: '', notes: '' };
+                                }
+                                newData[exerciseIndex.toString()].reps = value;
+                                setExerciseData(newData);
+                              }}
+                              keyboardType="numeric"
+                              placeholder={exercise.reps}
+                              placeholderTextColor={AppColors.textTertiary}
+                            />
+                          </View>
+                          
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Weight</Text>
+                            <TextInput
+                              style={styles.input}
+                              value={exerciseData[exerciseIndex.toString()]?.weight}
+                              onChangeText={(value) => {
+                                const newData = { ...exerciseData };
+                                if (!newData[exerciseIndex.toString()]) {
+                                  newData[exerciseIndex.toString()] = { reps: '', weight: '', notes: '' };
+                                }
+                                newData[exerciseIndex.toString()].weight = value;
+                                setExerciseData(newData);
+                              }}
+                              placeholder={exercise.weight}
+                              placeholderTextColor={AppColors.textTertiary}
+                            />
+                          </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>Notes</Text>
+                          <TextInput
+                            style={[styles.input, styles.notesInput]}
+                            value={exerciseData[exerciseIndex.toString()]?.notes}
+                            onChangeText={(value) => {
+                              const newData = { ...exerciseData };
+                              if (!newData[exerciseIndex.toString()]) {
+                                newData[exerciseIndex.toString()] = { reps: '', weight: '', notes: '' };
+                              }
+                              newData[exerciseIndex.toString()].notes = value;
+                              setExerciseData(newData);
+                            }}
+                            placeholder="Add notes about this exercise..."
+                            placeholderTextColor={AppColors.textTertiary}
+                            multiline
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Sets Tracking */}
+                  <View style={styles.setsContainer}>
+                    <Text style={styles.setsLabel}>Sets:</Text>
+                    <View style={styles.setsRow}>
+                      {Array.from({ length: parseInt(exercise.sets) || 3 }).map((_, setIndex) => {
+                        const isCompleted = completedSets[exerciseIndex.toString()]?.[setIndex] || false;
+                        return (
+                          <TouchableOpacity
+                            key={setIndex}
+                            style={[
+                              styles.setButton,
+                              isCompleted && styles.setButtonCompleted,
+                            ]}
+                            onPress={() => toggleSetCompletion(exerciseIndex, setIndex)}
+                            disabled={workoutState !== 'active'}
+                          >
+                            {isCompleted ? (
+                              <CheckCircle size={16} color={AppColors.textPrimary} />
+                            ) : (
+                              <Text style={styles.setNumber}>{setIndex + 1}</Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </LiquidGlassCard>
+              ))}
+            </View>
+
+            {/* Completion Section */}
+            {workoutState === 'completed' && (
+              <View style={styles.completionContainer}>
+                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                  <CheckCircle size={48} color={AppColors.success} />
+                </Animated.View>
+                <Text style={styles.completionTitle}>Workout Complete!</Text>
+                <Text style={styles.completionStats}>
+                  {formatTime(elapsedTime)} • {Math.round(caloriesBurned)} calories burned
+                </Text>
+              </View>
             )}
           </ScrollView>
 
@@ -626,15 +537,15 @@ export default function WorkoutTrackingOverlay({
             <View style={styles.metricItem}>
               <Dumbbell size={16} color={AppColors.primary} />
               <Text style={styles.metricValue}>
-                {currentExercise.targetMuscles?.[0] || 'Full Body'}
+                {getCompletedSetsCount()}/{getTotalSets()}
               </Text>
-              <Text style={styles.metricLabel}>Active Muscle</Text>
+              <Text style={styles.metricLabel}>Sets</Text>
             </View>
             
             <View style={styles.metricItem}>
               <Clock size={16} color={AppColors.success} />
               <Text style={styles.metricValue}>{formatTime(elapsedTime)}</Text>
-              <Text style={styles.metricLabel}>Elapsed</Text>
+              <Text style={styles.metricLabel}>Time</Text>
             </View>
             
             {heartRate > 0 && (
@@ -645,89 +556,6 @@ export default function WorkoutTrackingOverlay({
               </View>
             )}
           </View>
-
-          {/* Control Buttons */}
-          <View style={styles.controlsContainer}>
-            {workoutState === 'ready' && (
-              <GlassButton
-                title="Start Workout"
-                onPress={startWorkout}
-                variant="primary"
-                size="large"
-                style={styles.controlButton}
-                icon={<Play size={20} color={AppColors.textPrimary} />}
-              />
-            )}
-            
-            {workoutState === 'active' && (
-              <GlassButton
-                title="Pause"
-                onPress={pauseWorkout}
-                variant="secondary"
-                size="large"
-                style={styles.controlButton}
-                icon={<Pause size={20} color={AppColors.textPrimary} />}
-              />
-            )}
-            
-            {workoutState === 'paused' && (
-              <GlassButton
-                title="Resume"
-                onPress={resumeWorkout}
-                variant="primary"
-                size="large"
-                style={styles.controlButton}
-                icon={<Play size={20} color={AppColors.textPrimary} />}
-              />
-            )}
-
-            {workoutState === 'completed' && (
-              <View style={styles.completionContainer}>
-                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                  <CheckCircle size={48} color={AppColors.success} />
-                </Animated.View>
-                <Text style={styles.completionTitle}>Workout Complete!</Text>
-                <Text style={styles.completionStats}>
-                  {formatTime(elapsedTime)} • {Math.round(caloriesBurned)} calories burned
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Form Guide Modal */}
-          <Modal
-            visible={showFormGuide}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowFormGuide(false)}
-          >
-            <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
-              <View style={styles.modalContainer}>
-                <LiquidGlassCard style={styles.modal}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Form Guide</Text>
-                    <TouchableOpacity onPress={() => setShowFormGuide(false)}>
-                      <X size={24} color={AppColors.textSecondary} />
-                    </TouchableOpacity>
-                  </View>
-                  <ScrollView style={styles.modalContent}>
-                    <Text style={styles.modalText}>
-                      {currentExercise.instructions || 
-                        `Proper form for ${currentExercise.name}:\n\n• Maintain controlled movements\n• Keep your core engaged\n• Breathe properly throughout the exercise\n• Focus on the target muscles\n• Use full range of motion`
-                      }
-                    </Text>
-                  </ScrollView>
-                  <GlassButton
-                    title="Got it"
-                    onPress={() => setShowFormGuide(false)}
-                    variant="primary"
-                    size="medium"
-                    style={styles.modalButton}
-                  />
-                </LiquidGlassCard>
-              </View>
-            </BlurView>
-          </Modal>
         </BlurView>
       </Animated.View>
     </Modal>
@@ -748,6 +576,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.border,
+    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+    zIndex: 1000,
   },
   topBarContent: {
     flexDirection: 'row',
@@ -804,111 +634,119 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
+  },
+  mainContentContainer: {
+    paddingBottom: 100,
+  },
+  workoutControls: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  controlButton: {
+    width: '100%',
+  },
+  exercisesList: {
     paddingHorizontal: 20,
   },
-  currentExercisePanel: {
-    marginVertical: 20,
+  exercisesListTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
+    marginBottom: 16,
   },
   exerciseCard: {
-    minHeight: 400,
+    marginBottom: 16,
+    padding: 16,
+  },
+  exerciseCardExpanded: {
+    backgroundColor: 'rgba(59, 130, 246, 0.05)',
   },
   exerciseHeader: {
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  exerciseNavigation: {
+  exerciseHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    flex: 1,
   },
-  navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: AppColors.backgroundSecondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
+  exerciseNumber: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: AppColors.primary,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 16,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
+    marginRight: 12,
   },
   exerciseInfo: {
     flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
-  exerciseNumber: {
-    fontSize: 12,
-    color: AppColors.textSecondary,
-    fontWeight: '600',
-    marginBottom: 4,
   },
   exerciseName: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: AppColors.textPrimary,
-    textAlign: 'center',
     marginBottom: 4,
   },
-  setCounter: {
-    fontSize: 16,
-    color: AppColors.primary,
-    fontWeight: '600',
+  exerciseDetails: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
   },
-  muscleIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  exerciseProgress: {
+    alignItems: 'flex-end',
+    width: 60,
+  },
+  exerciseProgressBar: {
+    width: 50,
+    height: 4,
     backgroundColor: AppColors.backgroundSecondary,
-    borderRadius: 12,
-    alignSelf: 'center',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 4,
   },
-  muscleText: {
-    fontSize: 12,
-    color: AppColors.primary,
-    fontWeight: '600',
-    textTransform: 'capitalize',
+  exerciseProgressFill: {
+    height: '100%',
+    backgroundColor: AppColors.success,
+    borderRadius: 2,
   },
-  aiFeedbackContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+  exerciseProgressText: {
+    fontSize: 10,
+    color: AppColors.textTertiary,
   },
-  aiFeedbackHeader: {
+  exerciseDetails: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.border,
+  },
+  instructionsContainer: {
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    padding: 12,
+  },
+  instructionsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
     gap: 8,
   },
-  aiFeedbackTitle: {
+  instructionsTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: AppColors.primary,
-    flex: 1,
   },
-  analyzingIndicator: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderRadius: 8,
-  },
-  analyzingText: {
-    fontSize: 10,
-    color: AppColors.primary,
-    fontWeight: '600',
-  },
-  aiFeedbackText: {
+  instructionsText: {
     fontSize: 14,
     color: AppColors.textPrimary,
     lineHeight: 20,
   },
   inputSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   inputRow: {
     flexDirection: 'row',
@@ -929,7 +767,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 16,
+    fontSize: 14,
     color: AppColors.textPrimary,
     borderWidth: 1,
     borderColor: AppColors.border,
@@ -938,99 +776,68 @@ const styles = StyleSheet.create({
     height: 60,
     textAlignVertical: 'top',
   },
-  recordButton: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  quickAccessMenu: {
+  setsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.border,
-  },
-  quickAccessButton: {
     alignItems: 'center',
-    gap: 4,
+    marginTop: 8,
   },
-  quickAccessText: {
-    fontSize: 11,
+  setsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: AppColors.textSecondary,
-    fontWeight: '500',
+    marginRight: 12,
   },
-  nextExercisePanel: {
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-  },
-  nextExerciseHeader: {
+  setsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    gap: 8,
+    flex: 1,
   },
-  nextExerciseTitle: {
+  setButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: AppColors.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: AppColors.border,
+  },
+  setButtonCompleted: {
+    backgroundColor: AppColors.success,
+    borderColor: AppColors.success,
+  },
+  setNumber: {
     fontSize: 14,
     fontWeight: '600',
     color: AppColors.textSecondary,
   },
-  continueButton: {
-    flexDirection: 'row',
+  completionContainer: {
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderRadius: 8,
+    gap: 12,
+    paddingVertical: 30,
+    marginTop: 20,
   },
-  continueButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: AppColors.primary,
-  },
-  nextExerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-    marginBottom: 4,
-  },
-  nextExerciseDetails: {
-    fontSize: 12,
-    color: AppColors.textSecondary,
-  },
-  restTimerPanel: {
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  restTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.accent,
-    marginBottom: 8,
-  },
-  restTimer: {
-    fontSize: 48,
+  completionTitle: {
+    fontSize: 24,
     fontWeight: '700',
-    color: AppColors.accent,
-    marginBottom: 8,
+    color: AppColors.success,
   },
-  restSubtitle: {
-    fontSize: 14,
+  completionStats: {
+    fontSize: 16,
     color: AppColors.textSecondary,
-    marginBottom: 16,
-  },
-  skipRestButton: {
-    paddingHorizontal: 24,
   },
   bottomMetrics: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(10, 10, 10, 0.95)',
     borderTopWidth: 1,
     borderTopColor: AppColors.border,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   metricItem: {
     alignItems: 'center',
@@ -1045,66 +852,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: AppColors.textSecondary,
     fontWeight: '600',
-  },
-  controlsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  controlButton: {
-    width: '100%',
-  },
-  completionContainer: {
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 20,
-  },
-  completionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: AppColors.success,
-  },
-  completionStats: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  modalContainer: {
-    width: '90%',
-    maxWidth: 400,
-    maxHeight: height * 0.7,
-  },
-  modal: {
-    padding: 0,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: AppColors.textPrimary,
-  },
-  modalContent: {
-    maxHeight: 300,
-    paddingHorizontal: 24,
-  },
-  modalText: {
-    fontSize: 16,
-    color: AppColors.textPrimary,
-    lineHeight: 24,
-  },
-  modalButton: {
-    marginHorizontal: 24,
-    marginVertical: 24,
   },
 });
