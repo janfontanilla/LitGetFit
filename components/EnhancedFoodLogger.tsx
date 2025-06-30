@@ -12,7 +12,7 @@ import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
 import VoiceFoodLogger from './VoiceFoodLogger';
-import openAIService from '@/lib/openaiService';
+import groqService from '@/lib/groqService';
 import { foodLogService } from '@/lib/foodLogService';
 
 interface EnhancedFoodLoggerProps {
@@ -31,21 +31,18 @@ export default function EnhancedFoodLogger({ onFoodLogged, style }: EnhancedFood
     setIsAnalyzing(true);
 
     try {
-      // Use OpenAI to analyze the food description
-      const analysis = await openAIService.analyzeFoodDescription(inputText.trim());
+      // Use Groq to analyze the food description
+      const analysis = await groqService.analyzeFoodDescription(inputText.trim());
       
       if (analysis) {
-        // Determine meal type based on time
-        const currentHour = new Date().getHours();
-        let mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'snack';
-        
-        if (currentHour >= 6 && currentHour < 11) {
-          mealType = 'breakfast';
-        } else if (currentHour >= 11 && currentHour < 16) {
-          mealType = 'lunch';
-        } else if (currentHour >= 16 && currentHour < 22) {
-          mealType = 'dinner';
-        }
+        // Determine meal type based on time if not provided by analysis
+        const mealType = analysis.meal_type || (() => {
+          const currentHour = new Date().getHours();
+          if (currentHour >= 6 && currentHour < 11) return 'breakfast';
+          if (currentHour >= 11 && currentHour < 16) return 'lunch';
+          if (currentHour >= 16 && currentHour < 22) return 'dinner';
+          return 'snack';
+        })();
 
         // Create food log entry
         const foodLogData = {

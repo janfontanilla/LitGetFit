@@ -8,11 +8,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Send, Bot, User, Loader as Loader2 } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
-import openAIService from '@/lib/openaiService';
+import WelcomeMessage from './WelcomeMessage';
+import { userProfileService } from '@/lib/supabase';
 
 interface Message {
   id: string;
@@ -37,21 +39,46 @@ const quickQuestions = [
 ];
 
 export default function SmartNutritionChat({ userProfile, style }: SmartNutritionChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: `Hi! I'm your AI nutrition coach. I can help you with meal planning, nutrition questions, and dietary advice${userProfile ? ` tailored to your ${userProfile.primary_goal?.replace('_', ' ')} goal` : ''}. What would you like to know?`,
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(Date.now().toString());
+  const [userProfileData, setUserProfileData] = useState<any>(userProfile);
+  const [conversationHistory, setConversationHistory] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (!userProfileData) {
+      loadUserProfile();
+    }
+    
+    // Initialize with welcome message
+    if (messages.length === 0) {
+      setMessages([
+        {
+          id: '1',
+          text: `Hi! I'm your AI nutrition coach. I can help you with meal planning, nutrition questions, and dietary advice tailored to your fitness goals. What would you like to know?`,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, []);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profiles = await userProfileService.getAllProfiles();
+      if (profiles.length > 0) {
+        setUserProfileData(profiles[0]);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -77,8 +104,33 @@ export default function SmartNutritionChat({ userProfile, style }: SmartNutritio
     };
     setMessages(prev => [...prev, loadingMessage]);
 
+    // Update conversation history for context
+    const updatedHistory = [
+      ...conversationHistory,
+      { role: 'user', content: text.trim() }
+    ];
+    setConversationHistory(updatedHistory);
+
     try {
-      const response = await openAIService.generateNutritionAdvice(text, userProfile);
+      // Call the API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: text.trim(),
+          conversationId,
+          conversationHistory: updatedHistory,
+          userId: userProfileData?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       
       // Remove loading message and add actual response
       setMessages(prev => {
@@ -87,12 +139,19 @@ export default function SmartNutritionChat({ userProfile, style }: SmartNutritio
           ...filtered,
           {
             id: (Date.now() + 2).toString(),
-            text: response || "I'm sorry, I couldn't process your question right now. Please try again.",
+            text: data.response || "I'm sorry, I couldn't process your question right now. Please try again.",
             isUser: false,
             timestamp: new Date(),
           },
         ];
       });
+
+      // Update conversation history with assistant's response
+      setConversationHistory([
+        ...updatedHistory,
+        { role: 'assistant', content: data.response }
+      ]);
+
     } catch (error) {
       console.error('Error getting nutrition advice:', error);
       setMessages(prev => {
@@ -169,12 +228,20 @@ export default function SmartNutritionChat({ userProfile, style }: SmartNutritio
       style={[styles.container, style]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Welcome Message */}
+      <WelcomeMessage 
+        onPress={() => {
+          // Focus on input or show quick questions
+        }}
+        style={styles.welcomeMessage}
+      />
+      
       <LiquidGlassCard style={styles.chatCard}>
         {/* Header */}
         <View style={styles.header}>
           <Bot size={24} color={AppColors.primary} />
           <Text style={styles.headerTitle}>Nutrition AI</Text>
-          <Text style={styles.headerSubtitle}>Ask me anything about nutrition</Text>
+          <Text style={styles.headerSubtitle}>Powered by Groq</Text>
         </View>
 
         {/* Messages */}
@@ -246,6 +313,9 @@ export default function SmartNutritionChat({ userProfile, style }: SmartNutritio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  welcomeMessage: {
+    marginBottom: 16,
   },
   chatCard: {
     flex: 1,

@@ -14,6 +14,7 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import EnhancedFoodLogger from '@/components/EnhancedFoodLogger';
 import FoodLogsList from '@/components/FoodLogsList';
 import SmartNutritionChat from '@/components/SmartNutritionChat';
+import WelcomeMessage from '@/components/WelcomeMessage';
 import { AppColors, Gradients } from '@/styles/colors';
 
 type NutritionView = 'logging' | 'chat';
@@ -45,6 +46,11 @@ export default function NutritionScreen() {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
+      {/* Welcome Message */}
+      <WelcomeMessage 
+        onPress={() => setActiveView('chat')}
+      />
+      
       {/* Daily Summary */}
       <LiquidGlassCard style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
