@@ -1,183 +1,142 @@
-import Groq from 'groq-sdk';
-
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-export interface ChatResponse {
+interface NutritionChatRequest {
   message: string;
-  suggestions?: string[];
-  confidence?: number;
+  conversationHistory?: ChatMessage[];
+  userProfile?: any;
 }
 
-export class GroqService {
-  private client: Groq;
-  private apiKey: string;
+class GroqService {
+  private maxConversationLength: number = 10;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-    this.client = new Groq({
-      apiKey: this.apiKey,
-    });
-  }
-
-  async generateResponse(
-    messages: ChatMessage[],
-    context?: {
-      userGoals?: string[];
-      experienceLevel?: string;
-      currentWorkout?: string;
-      nutritionData?: any;
-    }
-  ): Promise<ChatResponse> {
+  async generateNutritionResponse(request: NutritionChatRequest): Promise<string | null> {
     try {
-      // Create system prompt based on context
-      const systemPrompt = this.createSystemPrompt(context);
-      
-      const chatMessages: ChatMessage[] = [
-        { role: 'system', content: systemPrompt },
-        ...messages
-      ];
-
-      const completion = await this.client.chat.completions.create({
-        messages: chatMessages,
-        model: 'llama3-8b-8192', // Fast and cost-effective model
-        temperature: 0.7,
-        max_tokens: 500,
-        top_p: 0.9,
-        stream: false,
+      // Since we can't use Groq directly in the browser, we'll use our API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: request.message,
+          conversationHistory: request.conversationHistory || [],
+          userProfile: request.userProfile,
+        }),
       });
 
-      const response = completion.choices[0]?.message?.content || 'I apologize, but I couldn\'t generate a response at the moment.';
-      
-      return {
-        message: response,
-        confidence: 0.9,
-      };
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response || null;
     } catch (error) {
-      console.error('Error generating Groq response:', error);
-      return {
-        message: 'I\'m having trouble connecting right now. Please try again in a moment.',
-        confidence: 0.1,
+      console.error('Error generating nutrition response:', error);
+      return null;
+    }
+  }
+
+  async analyzeFoodDescription(description: string): Promise<{
+    food_name: string;
+    quantity: string;
+    meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    estimated_calories?: number;
+    estimated_protein?: number;
+    estimated_carbs?: number;
+    estimated_fat?: number;
+  } | null> {
+    try {
+      // Use our API endpoint for food analysis
+      const response = await fetch('/api/analyze-food', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.analysis || null;
+    } catch (error) {
+      console.error('Error analyzing food description:', error);
+      
+      // Fallback to simple parsing if API fails
+      return this.simpleFoodParser(description);
+    }
+  }
+
+  // Simple fallback parser when API is unavailable
+  simpleFoodParser(description: string): {
+    food_name: string;
+    quantity: string;
+    meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    estimated_calories?: number;
+  } {
+    const lowerDesc = description.toLowerCase();
+    
+    // Extract quantity and food name
+    const quantityMatch = lowerDesc.match(/(\d+(?:\.\d+)?)\s*(?:cups?|pieces?|slices?|ounces?|oz|grams?|g|lbs?|pounds?|tablespoons?|tbsp|teaspoons?|tsp|servings?|portions?)?/);
+    const quantity = quantityMatch ? quantityMatch[0] : '1 serving';
+    
+    // Remove quantity from food name
+    let foodName = description.replace(quantityMatch?.[0] || '', '').trim();
+    if (foodName.startsWith('of ')) {
+      foodName = foodName.substring(3);
+    }
+    
+    // Determine meal type based on time or keywords
+    const currentHour = new Date().getHours();
+    let mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'snack';
+    
+    if (lowerDesc.includes('breakfast') || (currentHour >= 6 && currentHour < 11)) {
+      mealType = 'breakfast';
+    } else if (lowerDesc.includes('lunch') || (currentHour >= 11 && currentHour < 16)) {
+      mealType = 'lunch';
+    } else if (lowerDesc.includes('dinner') || (currentHour >= 16 && currentHour < 22)) {
+      mealType = 'dinner';
+    }
+    
+    // Basic calorie estimation (very simplified)
+    const estimateCalories = (food: string, qty: string): number => {
+      const calorieMap: { [key: string]: number } = {
+        'egg': 70,
+        'toast': 80,
+        'bread': 80,
+        'apple': 95,
+        'banana': 105,
+        'chicken': 165,
+        'rice': 130,
+        'pasta': 220,
+        'salad': 20,
+        'pizza': 285,
+        'burger': 540,
+        'sandwich': 300,
       };
-    }
-  }
-
-  private createSystemPrompt(context?: {
-    userGoals?: string[];
-    experienceLevel?: string;
-    currentWorkout?: string;
-    nutritionData?: any;
-  }): string {
-    let prompt = `You are an expert AI fitness and nutrition coach for the LitGetFit app. You provide personalized, encouraging, and scientifically-backed advice to help users achieve their fitness goals.
-
-Your personality:
-- Encouraging and motivational, but not overly pushy
-- Professional yet friendly
-- Focused on sustainable, healthy habits
-- Always prioritize safety and proper form
-- Use emojis sparingly but effectively
-
-Your expertise:
-- Exercise form and technique
-- Workout programming and progression
-- Nutrition and meal planning
-- Recovery and rest
-- Mental health and motivation
-- Injury prevention
-
-Guidelines:
-- Keep responses concise but informative (2-4 sentences typically)
-- Provide actionable advice when possible
-- Ask follow-up questions to better understand user needs
-- If you don't know something, admit it and suggest consulting a professional
-- Always encourage proper form and safety first
-- Be supportive of all fitness levels and goals`;
-
-    if (context) {
-      if (context.userGoals?.length) {
-        prompt += `\n\nUser's fitness goals: ${context.userGoals.join(', ')}`;
-      }
-      if (context.experienceLevel) {
-        prompt += `\n\nUser's experience level: ${context.experienceLevel}`;
-      }
-      if (context.currentWorkout) {
-        prompt += `\n\nCurrent workout: ${context.currentWorkout}`;
-      }
-      if (context.nutritionData) {
-        prompt += `\n\nNutrition context: ${JSON.stringify(context.nutritionData)}`;
-      }
-    }
-
-    return prompt;
-  }
-
-  async generateWorkoutAdvice(
-    exercise: string,
-    formFeedback?: string,
-    repCount?: number
-  ): Promise<ChatResponse> {
-    const messages: ChatMessage[] = [
-      {
-        role: 'user',
-        content: `I'm doing ${exercise}${repCount ? ` and I'm on rep ${repCount}` : ''}. ${formFeedback ? `Form feedback: ${formFeedback}` : 'How am I doing?'}`
-      }
-    ];
-
-    return this.generateResponse(messages, {
-      currentWorkout: exercise
-    });
-  }
-
-  async generateNutritionAdvice(
-    question: string,
-    nutritionData?: any
-  ): Promise<ChatResponse> {
-    const messages: ChatMessage[] = [
-      {
-        role: 'user',
-        content: question
-      }
-    ];
-
-    return this.generateResponse(messages, {
-      nutritionData
-    });
-  }
-
-  async generateMotivationalMessage(
-    context: 'workout_start' | 'workout_end' | 'nutrition_log' | 'goal_achieved' | 'struggling'
-  ): Promise<ChatResponse> {
-    const contextMessages = {
-      workout_start: "I'm about to start my workout. Give me a quick motivational boost!",
-      workout_end: "I just finished my workout. Give me some encouragement!",
-      nutrition_log: "I just logged my meal. Give me positive reinforcement!",
-      goal_achieved: "I achieved a fitness goal today! Celebrate with me!",
-      struggling: "I'm having a hard time staying motivated today. Help me get back on track."
+      
+      const qtyNum = parseFloat(qty) || 1;
+      const foodKey = Object.keys(calorieMap).find(key => food.includes(key));
+      const baseCalories = foodKey ? calorieMap[foodKey] : 100;
+      
+      return Math.round(baseCalories * qtyNum);
     };
-
-    const messages: ChatMessage[] = [
-      {
-        role: 'user',
-        content: contextMessages[context]
-      }
-    ];
-
-    return this.generateResponse(messages);
+    
+    return {
+      food_name: foodName || 'Unknown food',
+      quantity,
+      meal_type: mealType,
+      estimated_calories: estimateCalories(foodName, quantity),
+    };
   }
 }
 
-// Export a singleton instance
-let groqServiceInstance: GroqService | null = null;
+// Create a singleton instance
+const groqService = new GroqService();
 
-export const getGroqService = (): GroqService => {
-  if (!groqServiceInstance) {
-    const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
-    if (!apiKey) {
-      throw new Error('GROQ_API_KEY environment variable is required');
-    }
-    groqServiceInstance = new GroqService(apiKey);
-  }
-  return groqServiceInstance;
-}; 
+export default groqService;

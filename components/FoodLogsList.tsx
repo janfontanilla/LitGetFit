@@ -11,6 +11,7 @@ import { Trash2, Clock, Utensils } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import { foodLogService, FoodLog } from '@/lib/foodLogService';
+import { userProfileService } from '@/lib/supabase';
 
 interface FoodLogsListProps {
   refreshTrigger?: number;
@@ -20,10 +21,28 @@ interface FoodLogsListProps {
 export default function FoodLogsList({ refreshTrigger, onLogsChange }: FoodLogsListProps) {
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadTodaysFoodLogs();
-  }, [refreshTrigger]);
+    loadUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userProfileId) {
+      loadTodaysFoodLogs();
+    }
+  }, [refreshTrigger, userProfileId]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profiles = await userProfileService.getAllProfiles();
+      if (profiles.length > 0) {
+        setUserProfileId(profiles[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const loadTodaysFoodLogs = async () => {
     try {

@@ -1,8 +1,9 @@
 import { supabase } from './supabase';
+import { userProfileService } from './supabase';
 
 export interface FoodLog {
   id: string;
-  user_id?: string;
+  user_profile_id?: string;
   food_name: string;
   quantity: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -40,9 +41,19 @@ export interface ParsedFoodData {
 export const foodLogService = {
   async createFoodLog(data: FoodLogData): Promise<FoodLog | null> {
     try {
+      // Get the first user profile for now (in a real app, this would be the authenticated user)
+      const profiles = await userProfileService.getAllProfiles();
+      const userProfileId = profiles.length > 0 ? profiles[0].id : null;
+
+      if (!userProfileId) {
+        console.error('No user profile found');
+        return null;
+      }
+
       const { data: foodLog, error } = await supabase
         .from('food_logs')
         .insert([{
+          user_profile_id: userProfileId,
           food_name: data.food_name,
           quantity: data.quantity,
           meal_type: data.meal_type,
@@ -70,9 +81,19 @@ export const foodLogService = {
 
   async getFoodLogs(limit: number = 50): Promise<FoodLog[]> {
     try {
+      // Get the first user profile for now
+      const profiles = await userProfileService.getAllProfiles();
+      const userProfileId = profiles.length > 0 ? profiles[0].id : null;
+
+      if (!userProfileId) {
+        console.error('No user profile found');
+        return [];
+      }
+
       const { data: foodLogs, error } = await supabase
         .from('food_logs')
         .select('*')
+        .eq('user_profile_id', userProfileId)
         .order('logged_at', { ascending: false })
         .limit(limit);
 
@@ -90,6 +111,15 @@ export const foodLogService = {
 
   async getTodaysFoodLogs(): Promise<FoodLog[]> {
     try {
+      // Get the first user profile for now
+      const profiles = await userProfileService.getAllProfiles();
+      const userProfileId = profiles.length > 0 ? profiles[0].id : null;
+
+      if (!userProfileId) {
+        console.error('No user profile found');
+        return [];
+      }
+
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
@@ -97,6 +127,7 @@ export const foodLogService = {
       const { data: foodLogs, error } = await supabase
         .from('food_logs')
         .select('*')
+        .eq('user_profile_id', userProfileId)
         .gte('logged_at', startOfDay.toISOString())
         .lt('logged_at', endOfDay.toISOString())
         .order('logged_at', { ascending: false });
@@ -115,10 +146,20 @@ export const foodLogService = {
 
   async deleteFoodLog(id: string): Promise<boolean> {
     try {
+      // Get the first user profile for now
+      const profiles = await userProfileService.getAllProfiles();
+      const userProfileId = profiles.length > 0 ? profiles[0].id : null;
+
+      if (!userProfileId) {
+        console.error('No user profile found');
+        return false;
+      }
+
       const { error } = await supabase
         .from('food_logs')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_profile_id', userProfileId);
 
       if (error) {
         console.error('Error deleting food log:', error);

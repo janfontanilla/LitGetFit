@@ -34,3 +34,18 @@ export const Gradients = {
   card: ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)'] as const,
   surface: ['#18181B', '#27272A'] as const,
 };
+
+// Navigation specific colors
+export const NavigationColors = {
+  sidebar: {
+    background: 'rgba(10, 10, 10, 0.95)',
+    border: AppColors.border,
+    itemHover: 'rgba(255, 255, 255, 0.05)',
+    itemActive: AppColors.primary,
+  },
+  mobile: {
+    header: 'rgba(10, 10, 10, 0.95)',
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    menu: 'rgba(10, 10, 10, 0.98)',
+  },
+};

@@ -243,15 +243,8 @@ export default function HomeScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.greeting}>{getGreeting()},</Text>
-              <Text style={styles.userName}>Alex</Text>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
             </View>
-            <TouchableOpacity style={styles.profileImage}>
-              <Image 
-                source={{ uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2' }}
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
           </View>
 
           {/* Today's Workout Card */}
@@ -466,15 +459,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
-    fontWeight: '400',
-  },
-  userName: {
     fontSize: 28,
     color: AppColors.textPrimary,
     fontWeight: '700',
-    marginTop: 4,
   },
   profileImage: {
     width: 48,
