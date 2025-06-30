@@ -13,29 +13,7 @@ import {
   PanResponder,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { 
-  X, 
-  Play, 
-  Pause, 
-  Square, 
-  Clock, 
-  Dumbbell, 
-  Heart,
-  ChevronLeft,
-  ChevronRight,
-  SkipForward,
-  Edit3,
-  MessageSquare,
-  BookOpen,
-  Zap,
-  Target,
-  Flame,
-  CheckCircle,
-  RotateCcw,
-  Settings,
-  Camera,
-  Mic
-} from 'lucide-react-native';
+import { X, Play, Pause, Square, Clock, Dumbbell, Heart, ChevronLeft, ChevronRight, SkipForward, CreditCard as Edit3, MessageSquare, BookOpen, Zap, Target, Flame, CircleCheck as CheckCircle, RotateCcw, Settings, Camera, Mic } from 'lucide-react-native';
 
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
