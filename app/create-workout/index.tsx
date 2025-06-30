@@ -400,8 +400,8 @@ function ExerciseItem({
     onPanResponderGrant: () => {
       setIsDragging(true);
       pan.setOffset({
-        x: pan.x._value,
-        y: pan.y._value,
+        x: (pan.x as any)._value,
+        y: (pan.y as any)._value,
       });
     },
     onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {

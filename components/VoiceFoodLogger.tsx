@@ -225,11 +225,9 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
   };
 
   const provideFeedback = async (loggedText: string) => {
-    if (voiceMode === 'off') return;
-    
     if (voiceMode === 'elevenlabs') {
       const success = await speakWithElevenLabs(loggedText);
-      if (!success && voiceMode !== 'off') {
+      if (!success) {
         // Show visual feedback if voice fails
         console.log(`Logged: ${loggedText}`);
       }

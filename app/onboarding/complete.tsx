@@ -9,7 +9,7 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { userProfileService } from '@/lib/supabase';
+import { userProfileService, OnboardingData } from '@/lib/supabase';
 
 export default function CompleteScreen() {
   const { formData, clearFormData } = useOnboardingStore();
@@ -18,14 +18,20 @@ export default function CompleteScreen() {
   const handleComplete = async () => {
     setIsLoading(true);
     
-    try {
-      // Validate all required fields
-      if (!formData.name || !formData.age || !formData.height || !formData.fitness_experience || !formData.primary_goal || !formData.activity_level) {
-        Alert.alert('Missing Information', 'Please complete all required fields.');
-        setIsLoading(false);
-        return;
-      }
+    if (
+      !formData.name ||
+      !formData.age ||
+      !formData.height ||
+      !formData.activity_level ||
+      !formData.fitness_experience ||
+      !formData.primary_goal
+    ) {
+      Alert.alert('Incomplete Profile', 'Please make sure you have filled out all onboarding steps.');
+      setIsLoading(false);
+      return;
+    }
 
+    try {
       // Additional validation for constraints
       if (formData.age <= 0 || formData.age >= 150) {
         Alert.alert('Invalid Age', 'Please enter a valid age between 1 and 149.');
@@ -46,7 +52,7 @@ export default function CompleteScreen() {
       }
 
       // Save to Supabase
-      const profile = await userProfileService.createProfile(formData);
+      const profile = await userProfileService.createProfile(formData as OnboardingData);
 
       if (!profile) {
         Alert.alert('Error', 'Failed to save your profile. Please try again.');
@@ -115,13 +121,17 @@ export default function CompleteScreen() {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Experience:</Text>
                   <Text style={styles.summaryValue}>
-                    {formData.fitness_experience?.charAt(0).toUpperCase() + formData.fitness_experience?.slice(1)}
+                    {formData.fitness_experience
+                      ? formData.fitness_experience.charAt(0).toUpperCase() + formData.fitness_experience.slice(1)
+                      : 'Not set'}
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Goal:</Text>
+                  <Text style={styles.summaryLabel}>Primary Goal:</Text>
                   <Text style={styles.summaryValue}>
-                    {formData.primary_goal?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {formData.primary_goal
+                      ? formData.primary_goal.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                      : 'Not set'}
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>

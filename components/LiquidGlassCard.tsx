@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { AppColors } from '@/styles/colors';
+import { AppColors, Gradients } from '@/styles/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface LiquidGlassCardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   intensity?: number;
   tint?: 'light' | 'dark' | 'default';
 }
@@ -13,7 +14,7 @@ interface LiquidGlassCardProps {
 export default function LiquidGlassCard({ 
   children, 
   style, 
-  intensity = 10,
+  intensity = 20,
   tint = 'dark'
 }: LiquidGlassCardProps) {
   return (

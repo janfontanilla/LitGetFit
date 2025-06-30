@@ -142,7 +142,14 @@ export default function PreviewScreen() {
       const workoutData: WorkoutData = {
         name: workout.name,
         description: workout.description,
-        exercises: workout.exercises.map(({ order, ...exercise }) => exercise),
+        exercises: workout.exercises.map(exercise => ({
+          name: exercise.name,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          weight: exercise.weight,
+          restTime: exercise.restTime,
+          order: exercise.order,
+        })),
       };
 
       const savedWorkout = await workoutService.createWorkout(workoutData);

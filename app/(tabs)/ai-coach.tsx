@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,14 @@ import {
   Settings, 
   Play, 
   Pause, 
-  RotateCcw 
+  RotateCcw,
+  Brain
 } from 'lucide-react-native';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
+import { useChatContext, ChatContext } from '@/hooks/useChatContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,7 +37,27 @@ export default function AICoachScreen() {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [repCount, setRepCount] = useState(0);
   const [currentExercise, setCurrentExercise] = useState('Push-ups');
+  const [formFeedback, setFormFeedback] = useState<string>('');
+  const [showChat, setShowChat] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+
+  // Initialize chat context for workout advice
+  const workoutContext: ChatContext = {
+    currentWorkout: currentExercise,
+    experienceLevel: 'intermediate', // This could come from user profile
+    userGoals: ['strength', 'muscle_gain'], // This could come from user profile
+  };
+
+  const {
+    sendWorkoutAdvice,
+    sendMotivationalMessage,
+    initializeGroqService,
+  } = useChatContext(workoutContext);
+
+  useEffect(() => {
+    // Initialize Groq service on component mount
+    initializeGroqService();
+  }, [initializeGroqService]);
 
   const triggerHaptic = () => {
     // Web-compatible haptic feedback alternative
@@ -47,10 +69,13 @@ export default function AICoachScreen() {
     }
   };
 
-  const startCoaching = () => {
+  const startCoaching = async () => {
     setCoachingState('active');
     setRepCount(0);
     triggerHaptic();
+    
+    // Send motivational message when starting workout
+    await sendMotivationalMessage('workout_start');
   };
 
   const pauseCoaching = () => {
@@ -67,6 +92,48 @@ export default function AICoachScreen() {
     setIsVoiceEnabled(!isVoiceEnabled);
     triggerHaptic();
   };
+
+  const toggleChat = () => {
+    setShowChat(!showChat);
+  };
+
+  // Simulate form analysis and get AI feedback
+  const analyzeForm = async () => {
+    if (coachingState !== 'active') return;
+
+    // Simulate form analysis (in real app, this would use computer vision)
+    const formIssues = [
+      'Keep your back straight',
+      'Engage your core',
+      'Lower your body more',
+      'Keep your elbows close to your body',
+      'Great form! Keep it up!',
+    ];
+    
+    const randomFeedback = formIssues[Math.floor(Math.random() * formIssues.length)];
+    setFormFeedback(randomFeedback);
+
+    // Get AI workout advice
+    await sendWorkoutAdvice(currentExercise, randomFeedback, repCount);
+  };
+
+  // Simulate rep counting
+  useEffect(() => {
+    if (coachingState === 'active') {
+      const interval = setInterval(() => {
+        setRepCount(prev => {
+          const newCount = prev + 1;
+          // Analyze form every 3 reps
+          if (newCount % 3 === 0) {
+            analyzeForm();
+          }
+          return newCount;
+        });
+      }, 3000); // Simulate rep every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [coachingState]);
 
   const renderCameraPermissionRequest = () => (
     <View style={styles.permissionContainer}>
@@ -152,23 +219,23 @@ export default function AICoachScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Camera Toggle */}
+          {/* Chat Toggle */}
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={toggleCamera}
-            accessibilityLabel="Switch camera"
+            onPress={toggleChat}
+            accessibilityLabel="Toggle AI chat"
           >
             <View style={styles.controlButtonInner}>
-              <RotateCcw size={24} color={AppColors.textPrimary} />
+              <Brain size={24} color={AppColors.textPrimary} />
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Coaching Feedback */}
-        {coachingState === 'active' && (
+        {coachingState === 'active' && formFeedback && (
           <LiquidGlassCard style={styles.feedbackCard}>
             <Text style={styles.feedbackText}>
-              Great form! Keep your back straight and engage your core.
+              {formFeedback}
             </Text>
           </LiquidGlassCard>
         )}

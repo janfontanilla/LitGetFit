@@ -26,18 +26,16 @@ export default function GlassButton({
     const baseStyle = [styles.button, styles[size]];
     
     if (disabled) {
-      baseStyle.push(styles.disabled);
+      return [...baseStyle, styles.disabled];
     }
     
     if (variant === 'primary') {
-      baseStyle.push(styles.primary);
+      return [...baseStyle, styles.primary];
     } else if (variant === 'secondary') {
-      baseStyle.push(styles.secondary);
+      return [...baseStyle, styles.secondary];
     } else {
-      baseStyle.push(styles.tertiary);
+      return [...baseStyle, styles.tertiary];
     }
-    
-    return baseStyle;
   };
 
   const getTextStyles = (): TextStyle => {

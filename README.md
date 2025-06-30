@@ -10,12 +10,13 @@ A cutting-edge AI-powered fitness companion built with React Native and Expo. Ge
 - **Real-time Form Analysis**: Advanced computer vision analyzes your workout form and provides instant feedback
 - **Personalized Workouts**: AI generates custom routines based on your goals, experience, and available time
 - **Smart Progression**: Adaptive difficulty that evolves with your fitness journey
+- **GroqCloud AI Chat**: Intelligent chatbot powered by GroqCloud API for personalized fitness and nutrition advice
 
 ### 🍎 Intelligent Nutrition
 - **Voice Food Logging**: Simply speak what you ate - "2 eggs and toast for breakfast"
 - **Premium Voice Feedback**: Encouraging AI coach powered by ElevenLabs for motivational responses
 - **Smart Meal Analysis**: Automatic calorie and macro estimation from natural language
-- **Nutrition Chat**: Ask questions and get personalized dietary advice
+- **Nutrition Chat**: Ask questions and get personalized dietary advice powered by GroqCloud AI
 
 ### 💪 Comprehensive Workout System
 - **Custom Workout Builder**: Create detailed workouts with exercises, sets, reps, and rest times
@@ -34,6 +35,7 @@ A cutting-edge AI-powered fitness companion built with React Native and Expo. Ge
 - **Frontend**: React Native with Expo SDK 52
 - **Navigation**: Expo Router 4.0 with tab-based architecture
 - **Database**: Supabase (PostgreSQL)
+- **AI Chat**: GroqCloud API (Llama3-8b model)
 - **AI Voice**: ElevenLabs Text-to-Speech
 - **Camera**: Expo Camera for form analysis
 - **Animations**: React Native Reanimated
@@ -61,6 +63,7 @@ Drag-and-drop workout creation with weight unit conversion and exercise reorderi
 - npm or yarn
 - Expo CLI
 - Supabase account
+- GroqCloud account (for AI chat features)
 - ElevenLabs account (optional, for premium voice features)
 
 ### Setup
@@ -80,10 +83,22 @@ Drag-and-drop workout creation with weight unit conversion and exercise reorderi
    
    Create a `.env` file in the root directory:
    ```env
+   # Supabase Configuration
    EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   
+   # GroqCloud Configuration (Required for AI chat)
+   EXPO_PUBLIC_GROQ_API_KEY=your_groq_api_key
+   
+   # ElevenLabs Configuration (Optional, for voice features)
    EXPO_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key
    ```
+
+   **Getting your GroqCloud API Key:**
+   1. Sign up at [GroqCloud](https://console.groq.com/)
+   2. Navigate to API Keys section
+   3. Create a new API key
+   4. Copy the key to your `.env` file
 
 4. **Database Setup**
    
@@ -123,9 +138,14 @@ lit-get-fit/
 │   ├── LiquidGlassCard.tsx      # Glassmorphism cards
 │   ├── GlassButton.tsx          # Styled buttons
 │   ├── VoiceFoodLogger.tsx      # Voice nutrition input
+│   ├── AIChatInterface.tsx      # AI chat interface
 │   └── ...
+├── hooks/                       # Custom React hooks
+│   ├── useChatContext.ts        # AI chat state management
+│   └── useFrameworkReady.ts     # Framework initialization
 ├── lib/                         # Services and utilities
 │   ├── supabase.ts              # Database client
+│   ├── groqService.ts           # GroqCloud AI service
 │   ├── foodLogService.ts        # Nutrition data
 │   └── elevenLabsService.ts     # AI voice synthesis
 ├── styles/                      # Design system
@@ -144,37 +164,54 @@ The AI Coach uses your device's camera to provide real-time feedback on exercise
 - Track workout progress
 - Provide motivational coaching
 
+### GroqCloud AI Chat Integration
+The app features an intelligent chatbot powered by GroqCloud's Llama3-8b model:
+- **Nutrition Coach**: Get personalized meal advice, macro analysis, and recipe suggestions
+- **Workout Coach**: Receive form tips, exercise modifications, and workout recommendations
+- **Motivational Support**: Encouraging messages and progress tracking
+- **Context-Aware**: The AI understands your fitness goals, experience level, and current workout
+
 ### Voice Nutrition Logging
 Simply speak what you ate in natural language:
 - "2 scrambled eggs and whole wheat toast for breakfast"
 - "1 cup of brown rice with grilled chicken for lunch"
 - "Apple as an afternoon snack"
 
-The app intelligently parses your speech, estimates calories and macros, and provides encouraging feedback through premium AI voice synthesis.
+## 🔧 API Configuration
 
-### Smart Workout Generation
-Choose between:
-- **Manual Creation**: Build custom workouts exercise by exercise
-- **AI Single Workout**: Generate targeted workouts for specific muscle groups
-- **AI Weekly Routine**: Create comprehensive multi-day training programs
+### GroqCloud API
+The app uses GroqCloud's fast and cost-effective Llama3-8b model for AI chat features:
 
-## 🔧 Configuration
+```typescript
+// Example usage in components
+import { getGroqService } from '@/lib/groqService';
 
-### Voice Features
-The app supports multiple voice feedback modes:
-- **ElevenLabs Premium**: High-quality AI voice with encouraging personality
-- **Silent Mode**: Visual feedback only
+const groqService = getGroqService();
+const response = await groqService.generateResponse([
+  { role: 'user', content: 'How can I improve my squat form?' }
+]);
+```
 
-### Database Schema
-The app uses three main tables:
-- **user_profiles**: Stores onboarding data, goals, and preferences
-- **workouts**: Custom workout routines with exercises and metadata
-- **food_logs**: Nutrition entries with meal timing and macro data
+**Features:**
+- Real-time AI responses
+- Context-aware conversations
+- Personalized fitness advice
+- Nutrition guidance
+- Motivational support
 
-### Customization
-- Modify colors in `/styles/colors.ts`
-- Adjust voice settings in `/lib/elevenLabsService.ts`
-- Update UI components in `/components/`
+### ElevenLabs Voice Synthesis
+For premium voice features, the app integrates with ElevenLabs:
+
+```typescript
+// Example usage
+import { ElevenLabsService } from '@/lib/elevenLabsService';
+
+const voiceService = new ElevenLabsService(apiKey);
+const audioBuffer = await voiceService.generateSpeech(
+  "Great job on that set! Keep up the excellent form.",
+  ElevenLabsService.VOICES.RACHEL
+);
+```
 
 ## 🚀 Deployment
 
@@ -183,36 +220,33 @@ The app uses three main tables:
 npm run build:web
 ```
 
-### Mobile App Store
-1. Create development build:
-   ```bash
-   expo build
-   ```
+### Mobile Deployment
+```bash
+# For iOS
+eas build --platform ios
 
-2. Submit to app stores using EAS:
-   ```bash
-   eas submit
-   ```
+# For Android
+eas build --platform android
+```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- **Supabase** for the backend infrastructure
-- **ElevenLabs** for premium AI voice synthesis
-- **Expo** for the amazing development platform
-- **Pexels** for beautiful stock photography
-- **Lucide** for the comprehensive icon library
+- GroqCloud for providing fast and reliable AI chat capabilities
+- ElevenLabs for high-quality voice synthesis
+- Supabase for the backend infrastructure
+- Expo team for the amazing development platform
 
 ## 📞 Support
 
