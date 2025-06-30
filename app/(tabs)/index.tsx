@@ -19,7 +19,6 @@ import WorkoutOverlay from '@/components/WorkoutOverlay';
 import { AppColors, Gradients } from '@/styles/colors';
 import { workoutService, Workout } from '@/lib/supabase';
 import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
-import { userProfileService, UserProfile } from '@/lib/supabase';
 
 interface TodaysWorkout {
   id: string;
@@ -36,7 +35,6 @@ export default function HomeScreen() {
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const currentHour = new Date().getHours();
   const getGreeting = () => {
@@ -52,12 +50,6 @@ export default function HomeScreen() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      
-      // Load user profile
-      const profiles = await userProfileService.getAllProfiles();
-      if (profiles.length > 0) {
-        setUserProfile(profiles[0]);
-      }
       
       // Load weekly stats
       const stats = await workoutProgressService.getWeeklyStats();
@@ -251,15 +243,8 @@ export default function HomeScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.greeting}>{getGreeting()},</Text>
-              <Text style={styles.userName}>User: {userProfile?.name || 'Fitness Enthusiast'}</Text>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
             </View>
-            <TouchableOpacity style={styles.profileImage} onPress={() => router.push('/(tabs)/profile')}>
-              <Image 
-                source={{ uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2' }}
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
           </View>
 
           {/* Today's Workout Card */}
@@ -474,15 +459,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
-    fontWeight: '400',
-  },
-  userName: {
     fontSize: 28,
     color: AppColors.textPrimary,
     fontWeight: '700',
-    marginTop: 4,
   },
   profileImage: {
     width: 48,
