@@ -5,11 +5,13 @@ import {
   StyleSheet, 
   ScrollView, 
   Image,
-  TouchableOpacity 
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Play, Flame, Target, TrendingUp, Plus } from 'lucide-react-native';
+import { Play, Flame, Target, TrendingUp, Plus, Dumbbell } from 'lucide-react-native';
 import { router } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
@@ -35,6 +37,7 @@ export default function HomeScreen() {
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState('Champion'); // Placeholder
 
   const currentHour = new Date().getHours();
   const getGreeting = () => {
@@ -94,20 +97,20 @@ export default function HomeScreen() {
         setTodaysWorkout({
           id: suggestedWorkout.id,
           name: suggestedWorkout.name,
-          description: suggestedWorkout.description || 'Ready to start',
+          description: suggestedWorkout.description || 'Ready for a new challenge',
           exercises: suggestedWorkout.exercises,
           estimatedDuration: 45, // Default duration
-          targetedMuscles: extractTargetedMuscles(suggestedWorkout.exercises),
+          targetedMuscles: ['Chest', 'Triceps'], // Placeholder
           progress: 0,
         });
       } else {
         // No workouts available, suggest creating one
         setTodaysWorkout({
           id: 'create',
-          name: 'Create Your First Workout',
-          description: 'Get started with a personalized routine',
+          name: 'Create Your First Routine',
+          description: 'A personalized workout is just a few taps away.',
           exercises: [],
-          estimatedDuration: 30,
+          estimatedDuration: 0,
           targetedMuscles: [],
           progress: 0,
         });
@@ -115,36 +118,6 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error loading today\'s workout:', error);
     }
-  };
-
-  const extractTargetedMuscles = (exercises: any[]): string[] => {
-    const muscles: string[] = [];
-    
-    exercises.forEach(exercise => {
-      if (exercise.name) {
-        const exerciseName = exercise.name.toLowerCase();
-        if (exerciseName.includes('chest') || exerciseName.includes('bench') || exerciseName.includes('push')) {
-          muscles.push('chest');
-        }
-        if (exerciseName.includes('back') || exerciseName.includes('pull') || exerciseName.includes('row')) {
-          muscles.push('back');
-        }
-        if (exerciseName.includes('squat') || exerciseName.includes('leg') || exerciseName.includes('lunge')) {
-          muscles.push('legs');
-        }
-        if (exerciseName.includes('shoulder') || exerciseName.includes('press') && !exerciseName.includes('bench')) {
-          muscles.push('shoulders');
-        }
-        if (exerciseName.includes('bicep') || exerciseName.includes('tricep') || exerciseName.includes('arm')) {
-          muscles.push('arms');
-        }
-        if (exerciseName.includes('abs') || exerciseName.includes('core') || exerciseName.includes('plank')) {
-          muscles.push('abs');
-        }
-      }
-    });
-    
-    return [...new Set(muscles)];
   };
 
   const handleStartWorkout = () => {
@@ -166,14 +139,7 @@ export default function HomeScreen() {
       pathname: '/workout/start',
       params: { 
         workoutId: todaysWorkout.id,
-        workoutData: JSON.stringify({
-          id: todaysWorkout.id,
-          name: todaysWorkout.name,
-          description: todaysWorkout.description,
-          exercises: todaysWorkout.exercises,
-          estimatedDuration: todaysWorkout.estimatedDuration,
-          targetedMuscles: todaysWorkout.targetedMuscles,
-        })
+        workoutData: JSON.stringify(todaysWorkout)
       }
     });
   };
@@ -222,12 +188,9 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <LinearGradient colors={Gradients.background} style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading your fitness dashboard...</Text>
-          </View>
-        </SafeAreaView>
+      <LinearGradient colors={Gradients.background} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={AppColors.primary} />
+        <Text style={styles.loadingText}>Loading Your Dashboard...</Text>
       </LinearGradient>
     );
   }
@@ -235,190 +198,79 @@ export default function HomeScreen() {
   return (
     <LinearGradient colors={Gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerText}>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-            </View>
+            <Text style={styles.greeting}>Hello, {userName}</Text>
+            <Text style={styles.motivation}>Ready to crush your goals today?</Text>
           </View>
 
           {/* Today's Workout Card */}
-          {todaysWorkout && (
-            <LiquidGlassCard style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Today's Workout</Text>
-                {todaysWorkout.id === 'completed' ? (
-                  <Target size={20} color={AppColors.success} />
-                ) : (
-                  <Play size={20} color={AppColors.primary} />
-                )}
+          <LinearGradient
+            colors={Gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.mainCard}
+          >
+            <View style={styles.mainCardContent}>
+              <View style={styles.mainCardHeader}>
+                <Dumbbell size={24} color="#FFF" />
+                <Text style={styles.mainCardTitle}>Today's Focus</Text>
               </View>
+              <Text style={styles.workoutName}>{todaysWorkout?.name}</Text>
+              <Text style={styles.workoutDescription}>{todaysWorkout?.description}</Text>
               
-              <View style={styles.workoutInfo}>
-                <View style={styles.workoutDetails}>
-                  <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
-                  <Text style={styles.workoutMeta}>
-                    {todaysWorkout.estimatedDuration} min • {todaysWorkout.description}
-                  </Text>
-                  
-                  {todaysWorkout.exercises.length > 0 && (
-                    <View style={styles.workoutStats}>
-                      <Text style={styles.statText}>
-                        {todaysWorkout.exercises.length} exercises
-                        {todaysWorkout.targetedMuscles.length > 0 && 
-                          ` • ${todaysWorkout.targetedMuscles.join(', ')}`
-                        }
-                      </Text>
-                    </View>
-                  )}
+              <View style={styles.workoutMeta}>
+                <View style={styles.metaItem}>
+                  <Flame size={16} color="#FFF" style={styles.metaIcon} />
+                  <Text style={styles.metaText}>{todaysWorkout?.estimatedDuration} min</Text>
                 </View>
-                
-                {todaysWorkout.progress !== undefined && (
-                  <View style={styles.progressContainer}>
-                    <ProgressRing progress={todaysWorkout.progress} size={60} strokeWidth={6} />
-                    <Text style={styles.progressText}>
-                      {Math.round(todaysWorkout.progress * 100)}%
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.metaItem}>
+                  <Target size={16} color="#FFF" style={styles.metaIcon} />
+                  <Text style={styles.metaText}>{todaysWorkout?.targetedMuscles.join(', ')}</Text>
+                </View>
               </View>
-              
-              <GlassButton
-                title={getWorkoutButtonTitle()}
-                onPress={handleStartWorkout}
-                variant={getWorkoutButtonVariant()}
-                style={styles.workoutButton}
-                disabled={todaysWorkout.id === 'completed'}
-              />
-            </LiquidGlassCard>
-          )}
 
-          {/* Weekly Progress Card */}
-          {weeklyStats && (
-            <LiquidGlassCard style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Weekly Progress</Text>
-                <TrendingUp size={20} color={AppColors.success} />
-              </View>
-              
-              <View style={styles.progressStats}>
-                <View style={styles.statItem}>
-                  <View style={styles.statIcon}>
-                    <Flame size={16} color={AppColors.accent} />
-                  </View>
-                  <Text style={styles.statLabel}>Current Streak</Text>
-                  <Text style={styles.statValue}>{weeklyStats.streak} days</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <View style={styles.statIcon}>
-                    <Target size={16} color={AppColors.primary} />
-                  </View>
-                  <Text style={styles.statLabel}>This Week</Text>
-                  <Text style={styles.statValue}>{weeklyStats.totalWorkouts}/5 workouts</Text>
-                </View>
-              </View>
-              
-              {/* Weekly Chart */}
-              <View style={styles.chartContainer}>
-                <View style={styles.chartBars}>
-                  {Object.entries(weeklyStats.workoutsByDay).map(([day, count]) => (
-                    <View key={day} style={styles.chartBarContainer}>
-                      <View 
-                        style={[
-                          styles.chartBar,
-                          { height: Math.max(4, count * 20) }
-                        ]}
-                      />
-                      <Text style={styles.chartLabel}>{day.charAt(0)}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </LiquidGlassCard>
-          )}
+              <TouchableOpacity style={styles.startButton} onPress={handleStartWorkout} activeOpacity={0.8}>
+                <Play size={22} color={AppColors.primary} style={styles.playIcon} />
+                <Text style={styles.startButtonText}>
+                  {todaysWorkout?.id === 'create' ? 'Create Workout' : 'Start Workout'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
 
-          {/* Daily Nutrition Card */}
-          <LiquidGlassCard style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Daily Nutrition</Text>
-              <Text style={styles.calorieCount}>1,850 / 2,200 cal</Text>
+          {/* Weekly Stats */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Week at a Glance</Text>
+            <View style={styles.statsGrid}>
+              <LiquidGlassCard style={styles.statCard}>
+                <TrendingUp size={24} color={AppColors.primary} />
+                <Text style={styles.statValue}>{weeklyStats?.totalWorkouts || 0}</Text>
+                <Text style={styles.statLabel}>Workouts</Text>
+              </LiquidGlassCard>
+              <LiquidGlassCard style={styles.statCard}>
+                <Flame size={24} color={AppColors.primary} />
+                <Text style={styles.statValue}>{(weeklyStats?.totalDuration || 0) * 8}</Text> 
+                <Text style={styles.statLabel}>Calories</Text>
+              </LiquidGlassCard>
+              <LiquidGlassCard style={styles.statCard}>
+                <Dumbbell size={24} color={AppColors.primary} />
+                <Text style={styles.statValue}>{(weeklyStats?.totalWorkouts || 0) * 12}</Text>
+                <Text style={styles.statLabel}>Sets</Text>
+              </LiquidGlassCard>
             </View>
-            
-            <View style={styles.nutritionProgress}>
-              <View style={styles.nutritionBar}>
-                <View style={[styles.nutritionFill, { width: '84%' }]} />
-              </View>
-            </View>
-            
-            <View style={styles.macroStats}>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIndicator, { backgroundColor: AppColors.primary }]} />
-                <Text style={styles.macroLabel}>Protein</Text>
-                <Text style={styles.macroValue}>120g</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIndicator, { backgroundColor: AppColors.success }]} />
-                <Text style={styles.macroLabel}>Carbs</Text>
-                <Text style={styles.macroValue}>180g</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIndicator, { backgroundColor: AppColors.warning }]} />
-                <Text style={styles.macroLabel}>Fats</Text>
-                <Text style={styles.macroValue}>65g</Text>
-              </View>
-            </View>
-            
-            <GlassButton
-              title="Log Meal"
-              onPress={() => router.push('/(tabs)/nutrition')}
-              variant="secondary"
-              size="small"
-              style={styles.logButton}
-            />
-          </LiquidGlassCard>
-
+          </View>
+          
           {/* Quick Actions */}
-          <LiquidGlassCard style={styles.card}>
-            <Text style={styles.cardTitle}>Quick Actions</Text>
-            
-            <View style={styles.quickActions}>
-              <TouchableOpacity 
-                style={styles.quickAction}
-                onPress={() => router.push('/create-workout')}
-              >
-                <View style={styles.quickActionIcon}>
-                  <Plus size={20} color={AppColors.primary} />
-                </View>
-                <Text style={styles.quickActionText}>Create Workout</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.quickAction}
-                onPress={() => router.push('/(tabs)/profile')}
-              >
-                <View style={styles.quickActionIcon}>
-                  <Target size={20} color={AppColors.success} />
-                </View>
-                <Text style={styles.quickActionText}>Set Goals</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.quickAction}
-                onPress={() => router.push('/(tabs)/routines')}
-              >
-                <View style={styles.quickActionIcon}>
-                  <TrendingUp size={20} color={AppColors.warning} />
-                </View>
-                <Text style={styles.quickActionText}>View Progress</Text>
-              </TouchableOpacity>
-            </View>
-          </LiquidGlassCard>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <GlassButton 
+              title="Create New Workout" 
+              onPress={() => router.push('/create-workout')} 
+              icon={<Plus size={18} color={AppColors.textPrimary} />}
+            />
+          </View>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -426,231 +278,49 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: AppColors.textSecondary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 130,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-  },
-  headerText: {
-    flex: 1,
-  },
-  greeting: {
-    fontSize: 28,
-    color: AppColors.textPrimary,
-    fontWeight: '700',
-  },
-  profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
-  card: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-  },
-  workoutInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  workoutDetails: {
-    flex: 1,
-  },
-  workoutName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-    marginBottom: 4,
-  },
-  workoutMeta: {
-    fontSize: 14,
-    color: AppColors.textSecondary,
-    marginBottom: 8,
-  },
-  workoutStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    fontSize: 12,
-    color: AppColors.textTertiary,
-  },
-  progressContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  progressText: {
-    position: 'absolute',
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-  },
-  workoutButton: {
-    width: '100%',
-  },
-  progressStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 32,
-    height: 32,
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 120 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: AppColors.textSecondary, fontSize: 16 },
+  
+  header: { marginBottom: 24 },
+  greeting: { fontSize: 28, fontWeight: 'bold', color: AppColors.textPrimary },
+  motivation: { fontSize: 16, color: AppColors.textSecondary, marginTop: 4 },
+
+  mainCard: { borderRadius: 24, padding: 24, marginBottom: 32 },
+  mainCardContent: {},
+  mainCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, opacity: 0.8 },
+  mainCardTitle: { color: '#FFF', fontSize: 16, fontWeight: '600', marginLeft: 8 },
+  workoutName: { color: '#FFF', fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
+  workoutDescription: { color: '#FFF', opacity: 0.8, marginBottom: 20, lineHeight: 20 },
+  
+  workoutMeta: { flexDirection: 'row', gap: 20, marginBottom: 24 },
+  metaItem: { flexDirection: 'row', alignItems: 'center' },
+  metaIcon: { marginRight: 6, opacity: 0.8 },
+  metaText: { color: '#FFF', fontSize: 14, fontWeight: '500' },
+  
+  startButton: {
+    backgroundColor: '#FFF',
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 14,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  statLabel: {
-    fontSize: 12,
-    color: AppColors.textSecondary,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-  },
-  chartContainer: {
-    marginTop: 8,
-  },
-  chartBars: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 60,
-    marginBottom: 8,
-  },
-  chartBarContainer: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  chartBar: {
-    width: 20,
-    backgroundColor: AppColors.primary,
-    borderRadius: 4,
-    opacity: 0.8,
-    marginBottom: 8,
-  },
-  chartLabel: {
-    fontSize: 12,
-    color: AppColors.textTertiary,
-    textAlign: 'center',
-  },
-  calorieCount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppColors.primary,
-  },
-  nutritionProgress: {
-    marginBottom: 16,
-  },
-  nutritionBar: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  nutritionFill: {
-    height: '100%',
-    backgroundColor: AppColors.success,
-    borderRadius: 4,
-  },
-  macroStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  macroItem: {
-    alignItems: 'flex-start',
-  },
-  macroIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-  macroLabel: {
-    fontSize: 12,
-    color: AppColors.textSecondary,
-    marginBottom: 2,
-  },
-  macroValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppColors.textPrimary,
-  },
-  logButton: {
-    alignSelf: 'flex-start',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  quickAction: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quickActionText: {
-    fontSize: 12,
-    color: AppColors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
+  playIcon: { marginRight: 8 },
+  startButtonText: { color: AppColors.primary, fontSize: 16, fontWeight: 'bold' },
+  
+  section: { marginBottom: 32 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: AppColors.textPrimary, marginBottom: 16 },
+  
+  statsGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  statCard: { flex: 1, padding: 16, alignItems: 'center', gap: 8 },
+  statValue: { fontSize: 22, fontWeight: 'bold', color: AppColors.textPrimary },
+  statLabel: { fontSize: 12, color: AppColors.textSecondary, fontWeight: '600' },
 });

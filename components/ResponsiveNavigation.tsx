@@ -71,7 +71,7 @@ const secondaryItems: NavigationItem[] = [
     id: 'settings',
     title: 'Settings',
     icon: Settings,
-    route: '/settings',
+    route: '/(tabs)/profile',
   },
 ];
 
