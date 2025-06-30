@@ -138,16 +138,6 @@ export default function ResponsiveNavigation() {
               color={isActive ? AppColors.textPrimary : AppColors.textSecondary}
               strokeWidth={isActive ? 2.5 : 2}
             />
-            {item.isNew && (
-              <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>NEW</Text>
-              </View>
-            )}
-            {item.badge && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{item.badge}</Text>
-              </View>
-            )}
           </View>
           {!isCollapsed && (
             <Text style={[

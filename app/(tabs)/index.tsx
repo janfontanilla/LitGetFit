@@ -13,6 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Flame, Target, TrendingUp, Plus, Dumbbell } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -22,6 +24,7 @@ import { AppColors, Gradients } from '@/styles/colors';
 import { workoutService, Workout } from '@/lib/supabase';
 import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
 import { foodLogService } from '@/lib/foodLogService';
+import { useOnboardingStore } from '@/store/onboardingStore';
 
 interface TodaysWorkout {
   id: string;
@@ -40,6 +43,8 @@ export default function HomeScreen() {
   const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('Champion'); // Placeholder
+  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
+  const router = useRouter();
 
   const currentHour = new Date().getHours();
   const getGreeting = () => {
@@ -50,6 +55,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadDashboardData();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      supabase.auth.exchangeCodeForSession(window.location.hash).then(({ data, error }) => {
+        if (data?.session) {
+          if (hasCompletedOnboarding) {
+            router.replace('/(tabs)');
+          } else {
+            router.replace('/onboarding');
+          }
+        }
+      });
+    }
   }, []);
 
   const loadDashboardData = async () => {

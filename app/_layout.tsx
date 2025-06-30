@@ -48,6 +48,7 @@ const InitialLayout = () => {
   );
 };
 
+// This is the root layout for the entire app.
 export default function RootLayout() {
   return (
     <SessionProvider>
