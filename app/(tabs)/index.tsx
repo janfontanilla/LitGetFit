@@ -16,6 +16,7 @@ import { workoutService, Workout } from '@/lib/supabase';
 import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
 import { foodLogService } from '@/lib/foodLogService';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useRouter } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
@@ -41,6 +42,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('Champion'); // Placeholder
   const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
+  const router = useRouter();
 
   const currentHour = new Date().getHours();
   const getGreeting = () => {

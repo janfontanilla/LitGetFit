@@ -39,9 +39,9 @@ export default function FoodLogsList({ visible, onClose }: FoodLogsListProps) {
 
   const loadUserProfile = async () => {
     try {
-      const profiles = await userProfileService.getAllProfiles();
-      if (profiles.length > 0) {
-        setUserProfileId(profiles[0].id);
+      const profile = await userProfileService.getProfile();
+      if (profile) {
+        setUserProfileId(profile.id);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);

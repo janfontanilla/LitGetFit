@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import Dashboard from './(tabs)/index';
-import { ActivityIndicator, View, Text } from 'react-native';
 import { AppColors } from '@/styles/colors';
 
 export default function Home() {
@@ -11,15 +11,20 @@ export default function Home() {
 
   useEffect(() => {
     console.log('[INDEX] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding);
-    if (!_hasHydrated) return;
-    if (!hasCompletedOnboarding) {
+  }, [_hasHydrated, hasCompletedOnboarding]);
+
+  useEffect(() => {
+    if (_hasHydrated && !hasCompletedOnboarding) {
       router.replace('/onboarding');
     }
-  }, [hasCompletedOnboarding, _hasHydrated, router]);
+  }, [_hasHydrated, hasCompletedOnboarding, router]);
 
   if (!_hasHydrated) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: AppColors.background }}>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.debugText}>
+          _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
+        </Text>
         <ActivityIndicator size="large" color={AppColors.primary} />
         <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
       </View>
@@ -27,9 +32,31 @@ export default function Home() {
   }
 
   if (!hasCompletedOnboarding) {
-    // Onboarding route will be shown by router.replace
+    // Don't render anything while redirecting
     return null;
   }
 
-  return <Dashboard />;
+  // Show dashboard
+  return (
+    <>
+      <Text style={styles.debugText}>
+        _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
+      </Text>
+      <Dashboard />
+    </>
+  );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: AppColors.background,
+  },
+  debugText: {
+    color: 'red',
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+});
