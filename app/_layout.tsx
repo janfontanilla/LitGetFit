@@ -21,19 +21,25 @@ const InitialLayout = () => {
     }
   }, [hasCompletedOnboarding, _hasHydrated, segments, router]);
 
-  if (!_hasHydrated) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={AppColors.primary} />
-        <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Slot />
-      <StatusBar style="light" />
+      {/* Debug Overlay */}
+      <View style={styles.debugOverlay} pointerEvents="none">
+        <Text style={{ color: 'red', fontWeight: 'bold' }}>
+          _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
+        </Text>
+      </View>
+      {_hasHydrated ? (
+        <>
+          <Slot />
+          <StatusBar style="light" />
+        </>
+      ) : (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={AppColors.primary} />
+          <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -52,5 +58,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: AppColors.background,
+  },
+  debugOverlay: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    alignItems: 'center',
+    pointerEvents: 'none',
   },
 });
