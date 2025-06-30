@@ -9,11 +9,12 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import { AppColors, Gradients } from '@/styles/colors';
 import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 import { userProfileService, OnboardingData } from '@/lib/supabase';
 
 export default function CompleteScreen() {
   const { formData, clearFormData } = useOnboardingStoreForm();
-  const { setHasCompletedOnboarding } = useOnboardingStore();
+  const { completeOnboarding } = useOnboardingStore() as OnboardingStoreState;
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async () => {
@@ -62,7 +63,7 @@ export default function CompleteScreen() {
       }
 
       console.log('User profile saved:', profile);
-      setHasCompletedOnboarding(true);
+      completeOnboarding();
       clearFormData();
       router.replace('/(tabs)');
     } catch (error) {

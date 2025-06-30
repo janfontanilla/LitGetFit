@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, Button } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import Dashboard from './(tabs)/index';
@@ -10,10 +10,12 @@ export default function Home() {
     hasCompletedOnboarding, 
     _hasHydrated,
     currentOnboardingStep,
+    resetOnboarding,
   } = useOnboardingStore() as {
     hasCompletedOnboarding: boolean;
     _hasHydrated: boolean;
     currentOnboardingStep: string;
+    resetOnboarding: () => void;
   };
 
   useEffect(() => {
@@ -36,10 +38,7 @@ export default function Home() {
 
   // Determine which onboarding screen to show
   if (!hasCompletedOnboarding) {
-    if (currentOnboardingStep === 'welcome' || currentOnboardingStep === 'index') {
-      return <Redirect href="/onboarding/name" />;
-    }
-    if (currentOnboardingStep === 'name') {
+    if (currentOnboardingStep === 'welcome' || currentOnboardingStep === 'index' || currentOnboardingStep === 'name') {
       return <Redirect href="/onboarding/name" />;
     }
     if (currentOnboardingStep === 'age') {
@@ -60,8 +59,15 @@ export default function Home() {
     if (currentOnboardingStep === 'complete') {
       return <Redirect href="/onboarding/complete" />;
     }
-    // Fallback to first onboarding screen
-    return <Redirect href="/onboarding/name" />;
+    // Fallback: show error and reset option
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.debugText}>
+          Unknown onboarding step: {currentOnboardingStep}
+        </Text>
+        <Button title="Reset Onboarding" onPress={resetOnboarding} />
+      </View>
+    );
   }
 
   // Show dashboard
@@ -86,5 +92,6 @@ const styles = StyleSheet.create({
     color: 'red',
     fontWeight: 'bold',
     marginBottom: 16,
+    textAlign: 'center',
   },
 });

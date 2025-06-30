@@ -16,6 +16,7 @@ import { workoutService, Workout } from '@/lib/supabase';
 import { workoutProgressService, WeeklyStats } from '@/lib/workoutProgressService';
 import { foodLogService } from '@/lib/foodLogService';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 import { useRouter } from 'expo-router';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
@@ -41,7 +42,7 @@ export default function HomeScreen() {
   const [showWorkoutOverlay, setShowWorkoutOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('Champion'); // Placeholder
-  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
+  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore() as OnboardingStoreState;
   const router = useRouter();
 
   const currentHour = new Date().getHours();

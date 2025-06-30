@@ -3,10 +3,11 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { AppColors } from '@/styles/colors';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 import { StatusBar } from 'expo-status-bar';
 
 const InitialLayout = () => {
-  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore();
+  const { hasCompletedOnboarding, _hasHydrated } = useOnboardingStore() as OnboardingStoreState;
   const segments = useSegments();
   const router = useRouter();
 
