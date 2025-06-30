@@ -13,21 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { 
-  X, 
-  Play, 
-  Pause, 
-  Square, 
-  Clock, 
-  Dumbbell, 
-  Heart, 
-  CheckCircle, 
-  Home,
-  Target,
-  Flame,
-  Info,
-  Edit
-} from 'lucide-react-native';
+import { X, Play, Pause, Square, Clock, Dumbbell, Heart, CircleCheck as CheckCircle, Chrome as Home, Target, Flame, Info, CreditCard as Edit } from 'lucide-react-native';
 
 import LiquidGlassCard from './LiquidGlassCard';
 import GlassButton from './GlassButton';
