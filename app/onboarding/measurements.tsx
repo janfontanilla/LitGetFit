@@ -18,12 +18,14 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import OnboardingHeader from '@/components/OnboardingHeader';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 type UnitSystem = 'metric' | 'imperial';
 
 export default function MeasurementsScreen() {
-  const { formData, updateFormData } = useOnboardingStore();
+  const { setCurrentStep } = useOnboardingStore() as OnboardingStoreState;
+  const { formData, updateFormData } = useOnboardingStoreForm();
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
   
   // Height states
@@ -57,6 +59,7 @@ export default function MeasurementsScreen() {
         height: finalHeight,
         weight: finalWeight > 0 ? finalWeight : undefined
       });
+      setCurrentStep('experience');
       router.push('/onboarding/experience');
     }
   };

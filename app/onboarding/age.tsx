@@ -17,16 +17,19 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import OnboardingHeader from '@/components/OnboardingHeader';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 export default function AgeScreen() {
-  const { formData, updateFormData } = useOnboardingStore();
+  const { setCurrentStep } = useOnboardingStore() as OnboardingStoreState;
+  const { formData, updateFormData } = useOnboardingStoreForm();
   const [age, setAge] = useState(formData.age ? formData.age.toString() : '');
 
   const handleContinue = () => {
     const ageNumber = parseInt(age);
     if (isValid) {
       updateFormData({ age: ageNumber });
+      setCurrentStep('measurements');
       router.push('/onboarding/measurements');
     }
   };

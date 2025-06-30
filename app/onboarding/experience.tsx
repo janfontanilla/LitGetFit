@@ -9,7 +9,8 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import OnboardingHeader from '@/components/OnboardingHeader';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 const experienceOptions = [
   {
@@ -33,12 +34,14 @@ const experienceOptions = [
 ];
 
 export default function ExperienceScreen() {
-  const { formData, updateFormData } = useOnboardingStore();
+  const { setCurrentStep } = useOnboardingStore() as OnboardingStoreState;
+  const { formData, updateFormData } = useOnboardingStoreForm();
   const [selectedExperience, setSelectedExperience] = useState(formData.fitness_experience || '');
 
   const handleContinue = () => {
     if (selectedExperience) {
       updateFormData({ fitness_experience: selectedExperience });
+      setCurrentStep('goals');
       router.push('/onboarding/goals');
     }
   };

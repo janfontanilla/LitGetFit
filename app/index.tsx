@@ -1,35 +1,28 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet, Button } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import Dashboard from './(tabs)/index';
 import { AppColors } from '@/styles/colors';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 export default function Home() {
   const { 
     hasCompletedOnboarding, 
     _hasHydrated,
     currentOnboardingStep,
-    resetOnboarding,
-  } = useOnboardingStore() as {
-    hasCompletedOnboarding: boolean;
-    _hasHydrated: boolean;
-    currentOnboardingStep: string;
-    resetOnboarding: () => void;
-  };
+  } = useOnboardingStore() as OnboardingStoreState;
 
   useEffect(() => {
-    console.log('[INDEX] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding);
-    console.log('[INDEX] Current step:', currentOnboardingStep);
+    // Optionally keep debug logs in console
+    // console.log('[INDEX] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding);
+    // console.log('[INDEX] Current step:', currentOnboardingStep);
   }, [_hasHydrated, hasCompletedOnboarding, currentOnboardingStep]);
 
   // Show loading while hydrating
   if (!_hasHydrated) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.debugText}>
-          _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
-        </Text>
         <ActivityIndicator size="large" color={AppColors.primary} />
         <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
       </View>
@@ -38,7 +31,10 @@ export default function Home() {
 
   // Determine which onboarding screen to show
   if (!hasCompletedOnboarding) {
-    if (currentOnboardingStep === 'welcome' || currentOnboardingStep === 'index' || currentOnboardingStep === 'name') {
+    if (currentOnboardingStep === 'welcome' || currentOnboardingStep === 'index') {
+      return <Redirect href="/onboarding/name" />;
+    }
+    if (currentOnboardingStep === 'name') {
       return <Redirect href="/onboarding/name" />;
     }
     if (currentOnboardingStep === 'age') {
@@ -59,26 +55,12 @@ export default function Home() {
     if (currentOnboardingStep === 'complete') {
       return <Redirect href="/onboarding/complete" />;
     }
-    // Fallback: show error and reset option
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.debugText}>
-          Unknown onboarding step: {currentOnboardingStep}
-        </Text>
-        <Button title="Reset Onboarding" onPress={resetOnboarding} />
-      </View>
-    );
+    // Fallback to first onboarding screen
+    return <Redirect href="/onboarding/name" />;
   }
 
   // Show dashboard
-  return (
-    <>
-      <Text style={styles.debugText}>
-        _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
-      </Text>
-      <Dashboard />
-    </>
-  );
+  return <Dashboard />;
 }
 
 const styles = StyleSheet.create({
@@ -87,11 +69,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: AppColors.background,
-  },
-  debugText: {
-    color: 'red',
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
   },
 });

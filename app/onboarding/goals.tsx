@@ -9,7 +9,8 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import OnboardingHeader from '@/components/OnboardingHeader';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 const goalOptions = [
   {
@@ -45,12 +46,14 @@ const goalOptions = [
 ];
 
 export default function GoalsScreen() {
-  const { formData, updateFormData } = useOnboardingStore();
+  const { setCurrentStep } = useOnboardingStore() as OnboardingStoreState;
+  const { formData, updateFormData } = useOnboardingStoreForm();
   const [selectedGoal, setSelectedGoal] = useState(formData.primary_goal || '');
 
   const handleContinue = () => {
     if (selectedGoal) {
       updateFormData({ primary_goal: selectedGoal });
+      setCurrentStep('activity');
       router.push('/onboarding/activity');
     }
   };

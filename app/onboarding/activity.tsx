@@ -9,7 +9,8 @@ import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import OnboardingHeader from '@/components/OnboardingHeader';
 import { AppColors, Gradients } from '@/styles/colors';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingStore, useOnboardingStoreForm } from '@/store/onboardingStore';
+import type { OnboardingStoreState } from '@/types/onboarding';
 
 const activityOptions = [
   {
@@ -45,12 +46,14 @@ const activityOptions = [
 ];
 
 export default function ActivityScreen() {
-  const { formData, updateFormData } = useOnboardingStore();
+  const { setCurrentStep } = useOnboardingStore() as OnboardingStoreState;
+  const { formData, updateFormData } = useOnboardingStoreForm();
   const [selectedActivity, setSelectedActivity] = useState(formData.activity_level || '');
 
   const handleContinue = () => {
     if (selectedActivity) {
       updateFormData({ activity_level: selectedActivity });
+      setCurrentStep('complete');
       router.push('/onboarding/complete');
     }
   };
