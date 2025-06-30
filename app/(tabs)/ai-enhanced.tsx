@@ -133,8 +133,9 @@ export default function AIEnhancedScreen() {
     }
   };
 
-  const openVideoCoachModal = () => {
-    setShowVideoCoachModal(true);
+  // Main function to open AI Form Analysis
+  const openAIFormAnalysis = () => {
+    router.push('/(tabs)/ai-coach');
   };
 
   const generateMotivationalVideo = async (videoType: 'motivational' | 'workout_tips' | 'progress_celebration') => {
@@ -363,7 +364,7 @@ export default function AIEnhancedScreen() {
         </Text>
         <GlassButton
           title="Open Form AI"
-          onPress={() => router.push('/(tabs)/ai-coach')}
+          onPress={openAIFormAnalysis}
           variant="secondary"
           size="medium"
           style={styles.formAnalysisButton}
@@ -397,7 +398,7 @@ export default function AIEnhancedScreen() {
           
           <TouchableOpacity 
             style={styles.quickAction}
-            onPress={openVideoCoachModal}
+            onPress={() => setShowVideoCoachModal(true)}
           >
             <View style={styles.quickActionIcon}>
               <Video size={20} color={AppColors.accent} />
@@ -407,7 +408,7 @@ export default function AIEnhancedScreen() {
           
           <TouchableOpacity 
             style={styles.quickAction}
-            onPress={() => router.push('/(tabs)/ai-coach')}
+            onPress={openAIFormAnalysis}
           >
             <View style={styles.quickActionIcon}>
               <Camera size={20} color={AppColors.warning} />
@@ -467,13 +468,12 @@ export default function AIEnhancedScreen() {
             )}
           </View>
 
-          {/* Prominent AI Video Coach Button - Fixed at Top */}
+          {/* Prominent AI Video Coach Button - Now Opens Form Analysis */}
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               style={styles.videoCoachButton}
-              onPress={openVideoCoachModal}
+              onPress={openAIFormAnalysis}
               activeOpacity={0.8}
-              disabled={isGeneratingVideo}
             >
               <LinearGradient
                 colors={['#FF6B6B', '#FF8E53', '#FF6B6B']}
@@ -482,24 +482,12 @@ export default function AIEnhancedScreen() {
                 end={{ x: 1, y: 1 }}
               >
                 <View style={styles.videoCoachContent}>
-                  {isGeneratingVideo ? (
-                    <>
-                      <Loader2 size={24} color={AppColors.textPrimary} />
-                      <View style={styles.videoCoachTextContainer}>
-                        <Text style={styles.videoCoachText}>Generating Video...</Text>
-                        <Text style={styles.videoCoachSubtext}>Creating your personalized content</Text>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <Video size={28} color={AppColors.textPrimary} />
-                      <View style={styles.videoCoachTextContainer}>
-                        <Text style={styles.videoCoachText}>AI Video Coach</Text>
-                        <Text style={styles.videoCoachSubtext}>Create Personalized Videos</Text>
-                      </View>
-                      <Play size={20} color="rgba(255, 255, 255, 0.8)" />
-                    </>
-                  )}
+                  <Camera size={28} color={AppColors.textPrimary} />
+                  <View style={styles.videoCoachTextContainer}>
+                    <Text style={styles.videoCoachText}>AI Form Coach</Text>
+                    <Text style={styles.videoCoachSubtext}>Real-time Form Analysis</Text>
+                  </View>
+                  <Play size={20} color="rgba(255, 255, 255, 0.8)" />
                 </View>
               </LinearGradient>
             </TouchableOpacity>
