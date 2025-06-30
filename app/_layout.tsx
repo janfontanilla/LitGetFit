@@ -21,6 +21,15 @@ const InitialLayout = () => {
     }
   }, [hasCompletedOnboarding, _hasHydrated, segments, router]);
 
+  if (!_hasHydrated) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={AppColors.primary} />
+        <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Debug Overlay */}
@@ -29,17 +38,8 @@ const InitialLayout = () => {
           _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
         </Text>
       </View>
-      {_hasHydrated ? (
-        <>
-          <Slot />
-          <StatusBar style="light" />
-        </>
-      ) : (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={AppColors.primary} />
-          <Text style={{color: AppColors.textPrimary, marginTop: 16}}>Loading (hydration)...</Text>
-        </View>
-      )}
+      <Slot />
+      <StatusBar style="light" />
     </View>
   );
 };
