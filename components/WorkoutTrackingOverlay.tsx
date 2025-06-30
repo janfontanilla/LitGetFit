@@ -173,7 +173,7 @@ export default function WorkoutTrackingOverlay({
 
   const completeWorkout = () => {
     const stats: WorkoutStats = {
-      workoutId: workout.id,
+      workoutId: workout.id || '',
       workoutName: workout.name,
       duration: elapsedTime,
       exercisesCompleted: getCompletedExercisesCount(),
@@ -393,7 +393,7 @@ export default function WorkoutTrackingOverlay({
 
                   {/* Exercise Details (expanded view) */}
                   {showExerciseDetails === exerciseIndex.toString() && (
-                    <View style={styles.exerciseDetails}>
+                    <View style={styles.exerciseDetailsContainer}>
                       {/* Instructions */}
                       {exercise.instructions && (
                         <View style={styles.instructionsContainer}>
@@ -681,6 +681,10 @@ const styles = StyleSheet.create({
   exerciseDetails: {
     fontSize: 14,
     color: AppColors.textSecondary,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.border,
   },
   exerciseProgress: {
     alignItems: 'flex-end',
@@ -703,7 +707,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: AppColors.textTertiary,
   },
-  exerciseDetails: {
+  exerciseDetailsContainer: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,

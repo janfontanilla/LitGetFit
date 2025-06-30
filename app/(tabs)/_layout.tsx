@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Platform, Dimensions } from 'react-native';
+import { Platform, Dimensions, ViewStyle } from 'react-native';
 import { Chrome as Home, RotateCcw, Utensils, User, Zap } from 'lucide-react-native';
 import NavigationWrapper from '@/components/NavigationWrapper';
 
@@ -10,7 +10,7 @@ export default function TabLayout() {
   const isWebDesktop = Platform.OS === 'web' && width >= 768;
   
   // Hide tab bar on web desktop since we have sidebar navigation
-  const tabBarStyle = isWebDesktop ? { display: 'none' } : {
+  const tabBarStyle: ViewStyle = isWebDesktop ? { display: 'none' } : {
     backgroundColor: '#1A1A1A',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.2)',
@@ -68,7 +68,7 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="ai-enhanced"
+          name="ai-coach"
           options={{
             title: 'AI Coach',
             tabBarIcon: ({ color, focused }) => (

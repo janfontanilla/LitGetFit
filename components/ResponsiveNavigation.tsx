@@ -40,10 +40,10 @@ const navigationItems: NavigationItem[] = [
     route: '/(tabs)/routines',
   },
   {
-    id: 'ai-enhanced',
+    id: 'ai-coach',
     title: 'AI Coach',
     icon: Zap,
-    route: '/(tabs)/ai-enhanced',
+    route: '/(tabs)/ai-coach',
     isNew: true,
   },
   {
@@ -274,7 +274,6 @@ export default function ResponsiveNavigation() {
 const styles = StyleSheet.create({
   // Desktop Styles
   desktopContainer: {
-    position: 'fixed' as any,
     top: 0,
     left: 0,
     bottom: 0,
@@ -324,7 +323,6 @@ const styles = StyleSheet.create({
 
   // Mobile Styles
   mobileHeader: {
-    position: 'absolute' as any,
     top: 0,
     left: 0,
     right: 0,
@@ -374,7 +372,6 @@ const styles = StyleSheet.create({
 
   // Mobile Menu
   overlay: {
-    position: 'absolute' as any,
     top: 0,
     left: 0,
     right: 0,
