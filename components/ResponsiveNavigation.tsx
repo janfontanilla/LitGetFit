@@ -12,18 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { router, usePathname } from 'expo-router';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Dumbbell, 
-  Utensils, 
-  User, 
-  Zap,
-  Calendar,
-  TrendingUp,
-  Settings
-} from 'lucide-react-native';
+import { Menu, X, Chrome as Home, Dumbbell, Utensils, User, Zap, Calendar, TrendingUp, Settings } from 'lucide-react-native';
 import { AppColors } from '@/styles/colors';
 
 const { width } = Dimensions.get('window');
