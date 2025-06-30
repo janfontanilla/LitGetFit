@@ -93,6 +93,18 @@ export default function FoodLogsList({ visible, onClose }: FoodLogsListProps) {
     return foodLogs.reduce((total, log) => total + (log.calories || 0), 0);
   };
 
+  const getTotalProtein = () => {
+    return foodLogs.reduce((total, log) => total + (log.protein || 0), 0);
+  };
+
+  const getTotalCarbs = () => {
+    return foodLogs.reduce((total, log) => total + (log.carbs || 0), 0);
+  };
+
+  const getTotalFat = () => {
+    return foodLogs.reduce((total, log) => total + (log.fat || 0), 0);
+  };
+
   const renderLogItem = ({ item }: { item: FoodLog }) => (
     <View style={styles.logItem}>
       <View style={styles.logDetails}>
@@ -120,8 +132,13 @@ export default function FoodLogsList({ visible, onClose }: FoodLogsListProps) {
           </View>
 
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total Calories</Text>
-            <Text style={styles.summaryValue}>{getTotalCalories().toLocaleString()}</Text>
+            <Text style={styles.summaryLabel}>Check your daily summary</Text>
+            <Text style={styles.summaryValue}>{getTotalCalories().toLocaleString()} kcal</Text>
+            <View style={styles.macrosRow}>
+              <Text style={styles.macroText}>Protein: {getTotalProtein()}g</Text>
+              <Text style={styles.macroText}>Carbs: {getTotalCarbs()}g</Text>
+              <Text style={styles.macroText}>Fat: {getTotalFat()}g</Text>
+            </View>
           </View>
 
           {isLoading ? (
@@ -233,5 +250,17 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 8,
+  },
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+    gap: 12,
+  },
+  macroText: {
+    fontSize: 15,
+    color: AppColors.textSecondary,
+    fontWeight: '500',
   },
 });

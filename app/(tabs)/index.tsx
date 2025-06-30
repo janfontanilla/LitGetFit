@@ -18,12 +18,14 @@ import { foodLogService } from '@/lib/foodLogService';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import type { OnboardingStoreState } from '@/types/onboarding';
 import { useRouter } from 'expo-router';
+import { userProfileService } from '@/lib/supabase';
 
 import LiquidGlassCard from '@/components/LiquidGlassCard';
 import GlassButton from '@/components/GlassButton';
 import ProgressRing from '@/components/ProgressRing';
 import WorkoutOverlay from '@/components/WorkoutOverlay';
 import { AppColors, Gradients } from '@/styles/colors';
+import BoltBadge from '@/components/BoltBadge';
 
 interface TodaysWorkout {
   id: string;
@@ -54,6 +56,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadDashboardData();
+    // Load user name from profile
+    userProfileService.getProfile().then(profile => {
+      if (profile && profile.name) setUserName(profile.name);
+    });
   }, []);
 
   const loadDashboardData = async () => {
@@ -206,84 +212,87 @@ export default function HomeScreen() {
   }
 
   return (
-    <LinearGradient colors={Gradients.background} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.greeting}>Hello, {userName}</Text>
-            <Text style={styles.motivation}>Ready to crush your goals today?</Text>
-          </View>
-
-          {/* Today's Workout Card */}
-          <LinearGradient
-            colors={Gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.mainCard}
-          >
-            <View style={styles.mainCardContent}>
-              <View style={styles.mainCardHeader}>
-                <Dumbbell size={24} color="#FFF" />
-                <Text style={styles.mainCardTitle}>Today's Focus</Text>
-              </View>
-              <Text style={styles.workoutName}>{todaysWorkout?.name}</Text>
-              <Text style={styles.workoutDescription}>{todaysWorkout?.description}</Text>
-              
-              <View style={styles.workoutMeta}>
-                <View style={styles.metaItem}>
-                  <Flame size={16} color="#FFF" style={styles.metaIcon} />
-                  <Text style={styles.metaText}>{todaysWorkout?.estimatedDuration} min</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Target size={16} color="#FFF" style={styles.metaIcon} />
-                  <Text style={styles.metaText}>{todaysWorkout?.targetedMuscles.join(', ')}</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity style={styles.startButton} onPress={handleStartWorkout} activeOpacity={0.8}>
-                <Play size={22} color={AppColors.primary} style={styles.playIcon} />
-                <Text style={styles.startButtonText}>
-                  {todaysWorkout?.id === 'create' ? 'Create Workout' : 'Start Workout'}
-                </Text>
-              </TouchableOpacity>
+    <View style={{ flex: 1 }}>
+      <LinearGradient colors={Gradients.background} style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.greeting}>Hello, {userName}</Text>
+              <Text style={styles.motivation}>Ready to crush your goals today?</Text>
             </View>
-          </LinearGradient>
 
-          {/* Weekly Stats */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Week at a Glance</Text>
-            <View style={styles.statsGrid}>
-              <LiquidGlassCard style={styles.statCard}>
-                <TrendingUp size={24} color={AppColors.primary} />
-                <Text style={styles.statValue}>{weeklyStats?.totalWorkouts || 0}</Text>
-                <Text style={styles.statLabel}>Workouts</Text>
-              </LiquidGlassCard>
-              <LiquidGlassCard style={styles.statCard}>
-                <Flame size={24} color={AppColors.primary} />
-                <Text style={styles.statValue}>{todaysCalories}</Text>
-                <Text style={styles.statLabel}>Calories</Text>
-              </LiquidGlassCard>
-              <LiquidGlassCard style={styles.statCard}>
-                <Dumbbell size={24} color={AppColors.primary} />
-                <Text style={styles.statValue}>{(weeklyStats?.totalWorkouts || 0) * 12}</Text>
-                <Text style={styles.statLabel}>Sets</Text>
-              </LiquidGlassCard>
+            {/* Today's Workout Card */}
+            <LinearGradient
+              colors={Gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.mainCard}
+            >
+              <View style={styles.mainCardContent}>
+                <View style={styles.mainCardHeader}>
+                  <Dumbbell size={24} color="#FFF" />
+                  <Text style={styles.mainCardTitle}>Today's Focus</Text>
+                </View>
+                <Text style={styles.workoutName}>{todaysWorkout?.name}</Text>
+                <Text style={styles.workoutDescription}>{todaysWorkout?.description}</Text>
+                
+                <View style={styles.workoutMeta}>
+                  <View style={styles.metaItem}>
+                    <Flame size={16} color="#FFF" style={styles.metaIcon} />
+                    <Text style={styles.metaText}>{todaysWorkout?.estimatedDuration} min</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Target size={16} color="#FFF" style={styles.metaIcon} />
+                    <Text style={styles.metaText}>{todaysWorkout?.targetedMuscles.join(', ')}</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity style={styles.startButton} onPress={handleStartWorkout} activeOpacity={0.8}>
+                  <Play size={22} color={AppColors.primary} style={styles.playIcon} />
+                  <Text style={styles.startButtonText}>
+                    {todaysWorkout?.id === 'create' ? 'Create Workout' : 'Start Workout'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            {/* Weekly Stats */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Your Week at a Glance</Text>
+              <View style={styles.statsGrid}>
+                <LiquidGlassCard style={styles.statCard}>
+                  <TrendingUp size={24} color={AppColors.primary} />
+                  <Text style={styles.statValue}>{weeklyStats?.totalWorkouts || 0}</Text>
+                  <Text style={styles.statLabel}>Workouts</Text>
+                </LiquidGlassCard>
+                <LiquidGlassCard style={styles.statCard}>
+                  <Flame size={24} color={AppColors.primary} />
+                  <Text style={styles.statValue}>{todaysCalories}</Text>
+                  <Text style={styles.statLabel}>Calories</Text>
+                </LiquidGlassCard>
+                <LiquidGlassCard style={styles.statCard}>
+                  <Dumbbell size={24} color={AppColors.primary} />
+                  <Text style={styles.statValue}>{(weeklyStats?.totalWorkouts || 0) * 12}</Text>
+                  <Text style={styles.statLabel}>Sets</Text>
+                </LiquidGlassCard>
+              </View>
             </View>
-          </View>
-          
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <GlassButton 
-              title="Create New Workout" 
-              onPress={() => router.push('/create-workout')} 
-              icon={<Plus size={18} color={AppColors.textPrimary} />}
-            />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+            
+            {/* Quick Actions */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <GlassButton 
+                title="Create New Workout" 
+                onPress={() => router.push('/create-workout')} 
+                icon={<Plus size={18} color={AppColors.textPrimary} />}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+      <BoltBadge />
+    </View>
   );
 }
 

@@ -12,7 +12,8 @@ const InitialLayout = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('[LAYOUT] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding, 'Segments:', segments);
+    // Optionally keep debug logs in console
+    // console.log('[LAYOUT] Hydrated:', _hasHydrated, 'Onboarded:', hasCompletedOnboarding, 'Segments:', segments);
     if (!_hasHydrated) return;
     const inOnboarding = segments[0] === 'onboarding';
     if (!hasCompletedOnboarding && !inOnboarding) {
@@ -33,12 +34,6 @@ const InitialLayout = () => {
 
   return (
     <View style={styles.container}>
-      {/* Debug Overlay */}
-      <View style={styles.debugOverlay} pointerEvents="none">
-        <Text style={{ color: 'red', fontWeight: 'bold' }}>
-          _hasHydrated: {_hasHydrated ? 'true' : 'false'} | hasCompletedOnboarding: {hasCompletedOnboarding ? 'true' : 'false'}
-        </Text>
-      </View>
       <Slot />
       <StatusBar style="light" />
     </View>
@@ -59,14 +54,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: AppColors.background,
-  },
-  debugOverlay: {
-    position: 'absolute',
-    top: 40,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    alignItems: 'center',
-    pointerEvents: 'none',
   },
 });

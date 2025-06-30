@@ -6,6 +6,8 @@ import { Utensils, Send, Mic, List } from 'lucide-react-native';
 import { AppColors, Gradients } from '@/styles/colors';
 import FoodLogsList from './FoodLogsList'; // We will create this next
 import VoiceFoodLogger from './VoiceFoodLogger';
+import groqService from '@/lib/groqService';
+import { userProfileService } from '@/lib/supabase';
 
 interface Message {
   id: string;
@@ -20,20 +22,47 @@ export default function SmartNutritionChat() {
   const [inputText, setInputText] = useState('');
   const [showFoodLogs, setShowFoodLogs] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  const handleSend = () => {
-    if (inputText.trim() === '') return;
+  React.useEffect(() => {
+    // Load user profile for context
+    userProfileService.getProfile().then(profile => setUserProfile(profile));
+  }, []);
 
-    const newMessage: Message = {
+  const handleSend = async () => {
+    if (inputText.trim() === '') return;
+    const userMessage: Message = {
       id: (messages.length + 1).toString(),
       text: inputText,
       sender: 'user',
     };
-
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText('');
-    // Here you would typically process the message and get a bot response
+    setIsProcessing(true);
+    try {
+      const aiResponse = await groqService.generateNutritionResponse({
+        message: userMessage.text,
+        conversationHistory: messages.map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        })),
+        userProfile,
+      });
+      if (aiResponse) {
+        setMessages(prev => [
+          ...prev,
+          { id: (prev.length + 1).toString(), text: aiResponse, sender: 'bot' }
+        ]);
+      }
+    } catch (err) {
+      setMessages(prev => [
+        ...prev,
+        { id: (prev.length + 1).toString(), text: 'Sorry, I had trouble responding. Please try again.', sender: 'bot' }
+      ]);
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   const handleFoodLogged = (foodName: string) => {
