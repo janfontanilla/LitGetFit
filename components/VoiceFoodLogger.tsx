@@ -13,6 +13,7 @@ import { AppColors } from '@/styles/colors';
 import LiquidGlassCard from './LiquidGlassCard';
 import { foodLogService, FoodLogData } from '@/lib/foodLogService';
 import { ElevenLabsService, playAudioBuffer } from '@/lib/elevenLabsService';
+import { userProfileService } from '@/lib/supabase';
 
 // Mock voice recognition for web platform
 const mockVoiceRecognition = {
@@ -42,6 +43,7 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
   const [showSuccess, setShowSuccess] = useState(false);
   const [voiceMode, setVoiceMode] = useState<VoiceMode>('elevenlabs');
   const [elevenLabsService, setElevenLabsService] = useState<ElevenLabsService | null>(null);
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
   
   // Animation values
   const pulseAnim = new Animated.Value(1);
@@ -56,6 +58,9 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
     
     // Initialize ElevenLabs service
     initializeElevenLabs();
+    
+    // Load user profile
+    loadUserProfile();
     
     return () => {
       if (Platform.OS !== 'web') {
@@ -79,6 +84,17 @@ export default function VoiceFoodLogger({ onFoodLogged, style }: VoiceFoodLogger
       stopSpeakingAnimation();
     }
   }, [isSpeaking]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profiles = await userProfileService.getAllProfiles();
+      if (profiles.length > 0) {
+        setUserProfileId(profiles[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const initializeElevenLabs = () => {
     // In production, you'd get this from environment variables
